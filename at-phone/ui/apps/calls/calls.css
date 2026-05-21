@@ -1,0 +1,314 @@
+/* ============================================================
+   calls.css — stili app Telefono
+   ============================================================ */
+
+body {
+    background: var(--bg);
+    height: 100vh;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+}
+
+/* ============================================================
+   Stati (dialpad / chiamata)
+   ============================================================ */
+.call-state {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    flex-direction: column;
+    background: var(--bg);
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.25s ease;
+}
+
+.call-state.active {
+    opacity: 1;
+    pointer-events: all;
+    z-index: 2;
+}
+
+/* ============================================================
+   Tastierino
+   ============================================================ */
+.dialpad-section {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 4px 20px 8px;
+}
+
+.dial-display {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 12px;
+    min-height: 52px;
+    width: 100%;
+    position: relative;
+    margin-bottom: 8px;
+}
+
+#dial-number {
+    font-size: 32px;
+    font-weight: 300;
+    color: var(--text);
+    letter-spacing: 2px;
+    font-variant-numeric: tabular-nums;
+}
+
+.backspace-btn {
+    background: none;
+    border: none;
+    color: var(--text-muted);
+    cursor: pointer;
+    padding: 8px;
+    display: flex;
+    align-items: center;
+    transition: opacity var(--transition);
+    position: absolute;
+    right: 0;
+}
+
+.backspace-btn:active { opacity: 0.5; }
+
+.dialpad-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 10px;
+    width: 100%;
+    max-width: 260px;
+}
+
+.dial-key {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 50%;
+    width: 70px;
+    height: 70px;
+    cursor: pointer;
+    font-family: var(--font);
+    margin: 0 auto;
+    transition: background var(--transition), transform var(--transition);
+}
+
+.dial-key:active {
+    background: rgba(255,255,255,0.14);
+    transform: scale(0.92);
+}
+
+.dial-key .digit {
+    font-size: 26px;
+    font-weight: 300;
+    color: var(--text);
+    line-height: 1;
+}
+
+.dial-key .sub {
+    font-size: 9px;
+    font-weight: 600;
+    color: var(--text-muted);
+    letter-spacing: 1px;
+    margin-top: 1px;
+}
+
+.dial-actions {
+    display: flex;
+    justify-content: center;
+    margin-top: 12px;
+}
+
+/* ============================================================
+   Pulsanti chiamata
+   ============================================================ */
+.call-btn {
+    width: 70px;
+    height: 70px;
+    border-radius: 50%;
+    border: none;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: opacity var(--transition), transform var(--transition);
+    flex-shrink: 0;
+}
+
+.call-btn:active { opacity: 0.75; transform: scale(0.93); }
+.call-btn.green  { background: var(--green); }
+.call-btn.red    { background: var(--red);   }
+
+/* Animazione ring sul tasto rispondi */
+@keyframes ring {
+    0%  { box-shadow: 0 0 0 0   rgba(52,199,89,0.6); }
+    70% { box-shadow: 0 0 0 16px rgba(52,199,89,0);   }
+    100%{ box-shadow: 0 0 0 0   rgba(52,199,89,0);    }
+}
+
+.ring-btn { animation: ring 1.4s infinite; }
+
+@keyframes ringAvatar {
+    0%  { box-shadow: 0 0 0 0   rgba(52,199,89,0.4); }
+    70% { box-shadow: 0 0 0 20px rgba(52,199,89,0);   }
+    100%{ box-shadow: 0 0 0 0   rgba(52,199,89,0);    }
+}
+
+.ring-pulse { animation: ringAvatar 1.4s infinite; }
+
+/* ============================================================
+   Schermata chiamata
+   ============================================================ */
+.call-screen {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: space-between;
+    padding: 20px 20px 40px;
+}
+
+.call-contact-info {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 12px;
+    padding-top: 24px;
+}
+
+.call-name {
+    font-size: 26px;
+    font-weight: 700;
+    color: var(--text);
+    text-align: center;
+}
+
+.call-status {
+    font-size: 14px;
+    color: var(--text-muted);
+}
+
+.call-timer {
+    font-size: 18px;
+    color: var(--green);
+    font-variant-numeric: tabular-nums;
+    letter-spacing: 0.5px;
+}
+
+/* Dots animati "in corso..." */
+.outgoing-dots .dot {
+    animation: blink 1.4s infinite;
+}
+.outgoing-dots .dot:nth-child(2) { animation-delay: 0.2s; }
+.outgoing-dots .dot:nth-child(3) { animation-delay: 0.4s; }
+
+@keyframes blink {
+    0%, 80%, 100% { opacity: 0; }
+    40% { opacity: 1; }
+}
+
+/* ============================================================
+   Azioni chiamata
+   ============================================================ */
+.call-actions {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 28px;
+}
+
+.incoming-actions {
+    gap: 48px;
+}
+
+.call-action-wrap {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 8px;
+}
+
+.call-btn-label {
+    font-size: 12px;
+    color: var(--text-muted);
+    font-family: var(--font);
+}
+
+.call-action-btn {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 6px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    width: 64px;
+    height: 64px;
+    cursor: pointer;
+    color: var(--text);
+    font-family: var(--font);
+    font-size: 11px;
+    transition: background var(--transition), opacity var(--transition);
+}
+
+.call-action-btn:active { opacity: 0.7; }
+.call-action-btn.active { background: rgba(255,255,255,0.15); color: var(--amber); }
+
+.call-action-btn span {
+    font-size: 11px;
+    color: var(--text-muted);
+    line-height: 1;
+}
+
+/* ============================================================
+   Recenti
+   ============================================================ */
+.recents-section {
+    flex: 1;
+    overflow-y: auto;
+    border-top: 1px solid var(--border);
+}
+
+.recent-item {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 10px 16px;
+    border-bottom: 1px solid var(--border);
+    cursor: pointer;
+    transition: background var(--transition);
+}
+
+.recent-item:active { background: var(--surface-hover); }
+
+.recent-info { flex: 1; min-width: 0; }
+
+.recent-name {
+    font-size: 14px;
+    font-weight: 500;
+    color: var(--text);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.recent-detail {
+    font-size: 12px;
+    color: var(--text-muted);
+    display: flex;
+    align-items: center;
+    gap: 4px;
+}
+
+.recent-time {
+    font-size: 12px;
+    color: var(--text-muted);
+    flex-shrink: 0;
+}
+
+.direction-icon { flex-shrink: 0; }

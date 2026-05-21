@@ -1,0 +1,197 @@
+/* ============================================================
+   contacts.css — stili app Contatti
+   ============================================================ */
+
+body {
+    background: var(--bg);
+    height: 100vh;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+}
+
+/* Schermate con slide */
+.screen {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    flex-direction: column;
+    background: var(--bg);
+    transition: transform 0.28s cubic-bezier(0.4,0,0.2,1), opacity 0.22s ease;
+}
+
+.screen.active          { transform: translateX(0);    opacity: 1; z-index: 2; }
+.screen:not(.active)    { transform: translateX(100%); opacity: 0; z-index: 1; pointer-events: none; }
+
+/* ============================================================
+   Item contatto
+   ============================================================ */
+.contact-item {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 10px 16px;
+    cursor: pointer;
+    border-bottom: 1px solid var(--border);
+    transition: background var(--transition);
+}
+
+.contact-item:active { background: var(--surface-hover); }
+.contact-item:last-child { border-bottom: none; }
+
+.contact-meta { flex: 1; min-width: 0; }
+
+.contact-name {
+    font-size: 15px;
+    font-weight: 500;
+    color: var(--text);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.contact-number {
+    font-size: 13px;
+    color: var(--text-muted);
+}
+
+.contact-chevron {
+    color: var(--text-subtle);
+    flex-shrink: 0;
+}
+
+/* ============================================================
+   Scheda contatto
+   ============================================================ */
+.card-hero {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 24px 20px 16px;
+    gap: 10px;
+    border-bottom: 1px solid var(--border);
+}
+
+.card-name {
+    font-size: 22px;
+    font-weight: 700;
+    color: var(--text);
+    text-align: center;
+}
+
+.card-number {
+    font-size: 15px;
+    color: var(--text-muted);
+}
+
+.card-status {
+    font-size: 12px;
+    color: var(--green);
+}
+
+/* Azioni rapide */
+.quick-actions {
+    display: flex;
+    justify-content: center;
+    gap: 24px;
+    padding: 16px;
+}
+
+.quick-action-btn {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 6px;
+    background: none;
+    border: none;
+    cursor: pointer;
+    transition: opacity var(--transition);
+}
+
+.quick-action-btn:active { opacity: 0.6; }
+
+.quick-action-icon {
+    width: 52px;
+    height: 52px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.quick-action-label {
+    font-size: 12px;
+    color: var(--text-muted);
+    font-family: var(--font);
+}
+
+/* Info sezione */
+.card-section {
+    margin: 0 16px 12px;
+    background: var(--surface);
+    border-radius: var(--radius);
+    border: 1px solid var(--border);
+    overflow: hidden;
+}
+
+.card-section-title {
+    padding: 10px 14px 4px;
+    font-size: 11px;
+    font-weight: 600;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.card-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 10px 14px;
+    border-bottom: 1px solid var(--border);
+    font-size: 14px;
+}
+
+.card-row:last-child { border-bottom: none; }
+
+.card-row-label { color: var(--text-muted); }
+.card-row-value { color: var(--text); }
+
+/* Danger zone */
+.danger-zone {
+    margin: 0 16px 24px;
+}
+
+.danger-btn {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    width: 100%;
+    padding: 12px 14px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    color: var(--red);
+    font-family: var(--font);
+    font-size: 14px;
+    cursor: pointer;
+    margin-bottom: 8px;
+    transition: background var(--transition);
+}
+
+.danger-btn:active { background: var(--red-bg); }
+
+/* ============================================================
+   Avatar placeholder form
+   ============================================================ */
+.new-contact-avatar {
+    width: 90px;
+    height: 90px;
+    border-radius: 50%;
+    border: 2px dashed var(--border);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 0 auto 24px;
+    background: var(--surface);
+}

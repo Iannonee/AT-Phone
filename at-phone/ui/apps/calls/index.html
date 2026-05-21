@@ -1,0 +1,180 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Telefono</title>
+<link rel="stylesheet" href="../../style.css">
+<link rel="stylesheet" href="calls.css">
+</head>
+<body>
+
+<!-- ============================================================
+     STATO 1 — Tastierino + recenti
+     ============================================================ -->
+<div id="state-dialpad" class="call-state active">
+  <div class="app-navbar">
+    <span style="min-width:60px"></span>
+    <span class="app-navbar-title">Telefono</span>
+    <span style="min-width:60px"></span>
+  </div>
+
+  <div class="dialpad-section">
+    <!-- Display numero -->
+    <div class="dial-display">
+      <span id="dial-number"></span>
+      <button id="btn-backspace" class="backspace-btn">
+        <svg width="22" height="16" viewBox="0 0 24 18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M22 3H7L2 9l5 6h15a2 2 0 002-2V5a2 2 0 00-2-2z"/>
+          <line x1="17" y1="6" x2="13" y2="10"/>
+          <line x1="13" y1="6" x2="17" y2="10"/>
+        </svg>
+      </button>
+    </div>
+
+    <!-- Griglia 3x4 -->
+    <div class="dialpad-grid">
+      <button class="dial-key" data-digit="1"><span class="digit">1</span><span class="sub"> </span></button>
+      <button class="dial-key" data-digit="2"><span class="digit">2</span><span class="sub">ABC</span></button>
+      <button class="dial-key" data-digit="3"><span class="digit">3</span><span class="sub">DEF</span></button>
+      <button class="dial-key" data-digit="4"><span class="digit">4</span><span class="sub">GHI</span></button>
+      <button class="dial-key" data-digit="5"><span class="digit">5</span><span class="sub">JKL</span></button>
+      <button class="dial-key" data-digit="6"><span class="digit">6</span><span class="sub">MNO</span></button>
+      <button class="dial-key" data-digit="7"><span class="digit">7</span><span class="sub">PQRS</span></button>
+      <button class="dial-key" data-digit="8"><span class="digit">8</span><span class="sub">TUV</span></button>
+      <button class="dial-key" data-digit="9"><span class="digit">9</span><span class="sub">WXYZ</span></button>
+      <button class="dial-key" data-digit="*"><span class="digit">*</span><span class="sub"> </span></button>
+      <button class="dial-key" data-digit="0"><span class="digit">0</span><span class="sub">+</span></button>
+      <button class="dial-key" data-digit="#"><span class="digit">#</span><span class="sub"> </span></button>
+    </div>
+
+    <!-- Tasto chiama -->
+    <div class="dial-actions">
+      <button class="call-btn green" id="btn-dial">
+        <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M22 16.92v3a2 2 0 01-2.18 2 19.79 19.79 0 01-8.63-3.07A19.5 19.5 0 013.79 12a19.79 19.79 0 01-3.07-8.67A2 2 0 012.7 1.28h3a2 2 0 012 1.72c.127.96.361 1.903.7 2.81a2 2 0 01-.45 2.11L6.91 9a16 16 0 006 6l1.27-1.27a2 2 0 012.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0122 16.92z"/>
+        </svg>
+      </button>
+    </div>
+  </div>
+
+  <!-- Recenti -->
+  <div class="recents-section">
+    <div class="section-header">Recenti</div>
+    <div id="recent-calls-list">
+      <div class="empty-state" id="empty-recents">
+        <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M22 16.92v3a2 2 0 01-2.18 2 19.79 19.79 0 01-8.63-3.07A19.5 19.5 0 013.79 12a19.79 19.79 0 01-3.07-8.67A2 2 0 012.7 1.28h3a2 2 0 012 1.72c.127.96.361 1.903.7 2.81a2 2 0 01-.45 2.11L6.91 9a16 16 0 006 6l1.27-1.27a2 2 0 012.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0122 16.92z"/>
+        </svg>
+        <p>Nessuna chiamata recente</p>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ============================================================
+     STATO 2 — Chiamata in uscita
+     ============================================================ -->
+<div id="state-outgoing" class="call-state">
+  <div class="call-screen">
+    <div class="call-contact-info">
+      <div class="avatar lg" id="out-avatar" style="background:linear-gradient(135deg,#1a5c2e,#2d6a4f)">??</div>
+      <div class="call-name" id="out-name">—</div>
+      <div class="call-status outgoing-dots" id="out-status">Chiamata in corso<span class="dot">.</span><span class="dot">.</span><span class="dot">.</span></div>
+    </div>
+    <div class="call-actions">
+      <button class="call-action-btn muted" id="btn-mute-out" title="Mute">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <line x1="1" y1="1" x2="23" y2="23"/>
+          <path d="M9 9v3a3 3 0 005.12 2.12M15 9.34V4a3 3 0 00-5.94-.6"/>
+          <path d="M17 16.95A7 7 0 015 12v-2m14 0v2a7 7 0 01-.11 1.23M12 19v4M8 23h8"/>
+        </svg>
+        <span>Muto</span>
+      </button>
+      <button class="call-btn red" id="btn-hangup-out">
+        <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M10.68 13.31a16 16 0 003.41 2.6l1.27-1.27a2 2 0 012.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0122 16.92v3a2 2 0 01-2.18 2 19.79 19.79 0 01-8.63-3.07 19.42 19.42 0 01-3.33-2.67M9.59 9.59a19.79 19.79 0 01-3.07-8.67A2 2 0 018.7 1.28h3a2 2 0 012 1.72c.127.96.361 1.903.7 2.81a2 2 0 01-.45 2.11L12.68 9"/>
+          <line x1="1" y1="1" x2="23" y2="23"/>
+        </svg>
+      </button>
+      <button class="call-action-btn muted" id="btn-speaker-out" title="Speaker">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/>
+          <path d="M19.07 4.93a10 10 0 010 14.14M15.54 8.46a5 5 0 010 7.07"/>
+        </svg>
+        <span>Speaker</span>
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- ============================================================
+     STATO 3 — Chiamata in arrivo
+     ============================================================ -->
+<div id="state-incoming" class="call-state">
+  <div class="call-screen">
+    <div class="call-contact-info">
+      <div class="avatar lg ring-pulse" id="inc-avatar" style="background:linear-gradient(135deg,#1a5c2e,#2d6a4f)">??</div>
+      <div class="call-name" id="inc-name">—</div>
+      <div class="call-status" style="color:var(--text-muted)">Chiamata in arrivo</div>
+    </div>
+    <div class="call-actions incoming-actions">
+      <div class="call-action-wrap">
+        <button class="call-btn red" id="btn-decline">
+          <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M10.68 13.31a16 16 0 003.41 2.6l1.27-1.27a2 2 0 012.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0122 16.92v3a2 2 0 01-2.18 2 19.79 19.79 0 01-8.63-3.07 19.42 19.42 0 01-3.33-2.67M9.59 9.59a19.79 19.79 0 01-3.07-8.67A2 2 0 018.7 1.28h3a2 2 0 012 1.72c.127.96.361 1.903.7 2.81a2 2 0 01-.45 2.11L12.68 9"/>
+            <line x1="1" y1="1" x2="23" y2="23"/>
+          </svg>
+        </button>
+        <span class="call-btn-label">Rifiuta</span>
+      </div>
+      <div class="call-action-wrap">
+        <button class="call-btn green ring-btn" id="btn-answer">
+          <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M22 16.92v3a2 2 0 01-2.18 2 19.79 19.79 0 01-8.63-3.07A19.5 19.5 0 013.79 12a19.79 19.79 0 01-3.07-8.67A2 2 0 012.7 1.28h3a2 2 0 012 1.72c.127.96.361 1.903.7 2.81a2 2 0 01-.45 2.11L6.91 9a16 16 0 006 6l1.27-1.27a2 2 0 012.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0122 16.92z"/>
+          </svg>
+        </button>
+        <span class="call-btn-label">Rispondi</span>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ============================================================
+     STATO 4 — Chiamata attiva (connessa)
+     ============================================================ -->
+<div id="state-active" class="call-state">
+  <div class="call-screen">
+    <div class="call-contact-info">
+      <div class="avatar lg" id="act-avatar" style="background:linear-gradient(135deg,#1a5c2e,#2d6a4f)">??</div>
+      <div class="call-name" id="act-name">—</div>
+      <div class="call-timer" id="act-timer">0:00</div>
+    </div>
+    <div class="call-actions">
+      <button class="call-action-btn" id="btn-mute" title="Mute">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M12 1a3 3 0 00-3 3v8a3 3 0 006 0V4a3 3 0 00-3-3z"/>
+          <path d="M19 10v2a7 7 0 01-14 0v-2M12 19v4M8 23h8"/>
+        </svg>
+        <span>Muto</span>
+      </button>
+      <button class="call-btn red" id="btn-hangup">
+        <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M10.68 13.31a16 16 0 003.41 2.6l1.27-1.27a2 2 0 012.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0122 16.92v3a2 2 0 01-2.18 2 19.79 19.79 0 01-8.63-3.07 19.42 19.42 0 01-3.33-2.67M9.59 9.59a19.79 19.79 0 01-3.07-8.67A2 2 0 018.7 1.28h3a2 2 0 012 1.72c.127.96.361 1.903.7 2.81a2 2 0 01-.45 2.11L12.68 9"/>
+          <line x1="1" y1="1" x2="23" y2="23"/>
+        </svg>
+      </button>
+      <button class="call-action-btn" id="btn-speaker" title="Speaker">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/>
+          <path d="M19.07 4.93a10 10 0 010 14.14M15.54 8.46a5 5 0 010 7.07"/>
+        </svg>
+        <span>Speaker</span>
+      </button>
+    </div>
+  </div>
+</div>
+
+<script src="calls.js"></script>
+</body>
+</html>

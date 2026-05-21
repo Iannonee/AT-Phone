@@ -1,0 +1,613 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AT Phone</title>
+<link rel="stylesheet" href="style.css">
+<style>
+/* ============================================================
+   HOME SCREEN STYLES
+   ============================================================ */
+
+html, body {
+    background: transparent;
+    overflow: hidden;
+}
+
+/* Wrapper posizionato bottom-right */
+#phone-wrapper {
+    position: fixed;
+    bottom: 24px;
+    right: 32px;
+    z-index: 9999;
+    transform: translateY(120%) scale(0.85);
+    opacity: 0;
+    transition: transform 0.42s cubic-bezier(0.34,1.56,0.64,1),
+                opacity   0.32s ease;
+    pointer-events: none;
+}
+
+#phone-wrapper.open {
+    transform: translateY(0) scale(1);
+    opacity: 1;
+    pointer-events: all;
+}
+
+/* Corpo fisico del telefono */
+#phone-body {
+    width: 320px;
+    height: 680px;
+    background: var(--bg);
+    border-radius: 44px;
+    box-shadow:
+        0 0 0 1px rgba(255,255,255,0.08),
+        0 40px 80px rgba(0,0,0,0.7),
+        0 20px 40px rgba(0,0,0,0.5),
+        inset 0 1px 0 rgba(255,255,255,0.06);
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    position: relative;
+}
+
+/* ============================================================
+   Dynamic Island
+   ============================================================ */
+#dynamic-island {
+    position: absolute;
+    top: 10px;
+    left: 50%;
+    transform: translateX(-50%);
+    z-index: 20;
+    width: 110px;
+    height: 32px;
+    background: #000;
+    border-radius: 20px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.6);
+    transition: width 0.3s var(--spring), height 0.3s var(--spring);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+}
+
+#dynamic-island.expanded {
+    width: 260px;
+    height: 52px;
+    border-radius: 26px;
+}
+
+#di-call-info {
+    display: none;
+    align-items: center;
+    gap: 10px;
+    padding: 0 14px;
+    width: 100%;
+}
+
+#di-call-info.active { display: flex; }
+
+.di-call-name {
+    font-size: 13px;
+    font-weight: 500;
+    color: #fff;
+    flex: 1;
+}
+
+.di-call-timer {
+    font-size: 13px;
+    color: var(--green);
+    font-variant-numeric: tabular-nums;
+}
+
+.di-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: var(--green);
+    animation: pulse 1.5s infinite;
+}
+
+@keyframes pulse {
+    0%, 100% { opacity: 1; transform: scale(1); }
+    50%       { opacity: 0.5; transform: scale(0.8); }
+}
+
+/* ============================================================
+   Status Bar
+   ============================================================ */
+#status-bar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 14px 20px 4px;
+    flex-shrink: 0;
+    height: 50px;
+}
+
+.status-time {
+    font-size: 15px;
+    font-weight: 600;
+    color: var(--text);
+    letter-spacing: -0.3px;
+}
+
+.status-icons {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.status-icons svg { display: block; }
+
+/* ============================================================
+   Home Screen (visibile quando nessuna app è aperta)
+   ============================================================ */
+#home-screen {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    position: relative;
+}
+
+/* Data */
+#home-date {
+    text-align: center;
+    padding: 6px 0 10px;
+}
+
+.date-day-name {
+    font-size: 13px;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.date-day-number {
+    font-size: 42px;
+    font-weight: 200;
+    color: var(--text);
+    line-height: 1;
+    letter-spacing: -2px;
+}
+
+/* Notifiche */
+#notifications-area {
+    padding: 0 12px 8px;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    min-height: 0;
+}
+
+.notif-card {
+    background: var(--surface);
+    border-radius: var(--radius);
+    padding: 10px 14px;
+    border: 1px solid var(--border);
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+    animation: fadeIn 0.2s ease;
+}
+
+.notif-app-icon {
+    width: 32px;
+    height: 32px;
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+}
+
+.notif-content { flex: 1; min-width: 0; }
+
+.notif-title {
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--text);
+    margin-bottom: 2px;
+}
+
+.notif-body {
+    font-size: 12px;
+    color: var(--text-muted);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.notif-time {
+    font-size: 11px;
+    color: var(--text-subtle);
+    flex-shrink: 0;
+}
+
+/* ============================================================
+   App Grid
+   ============================================================ */
+#app-grid {
+    flex: 1;
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 16px 8px;
+    padding: 8px 12px 12px;
+    overflow: hidden;
+    align-content: start;
+}
+
+.app-icon {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 5px;
+    cursor: pointer;
+    -webkit-user-select: none;
+    user-select: none;
+    position: relative;
+    transition: transform var(--transition);
+}
+
+.app-icon:active { transform: scale(0.88); }
+
+.app-icon-img {
+    width: 56px;
+    height: 56px;
+    border-radius: 14px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 3px 10px rgba(0,0,0,0.4);
+}
+
+.app-icon-label {
+    font-size: 10px;
+    color: var(--text);
+    text-align: center;
+    line-height: 1.2;
+    max-width: 64px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.app-badge {
+    position: absolute;
+    top: -3px;
+    right: 4px;
+    background: var(--red);
+    color: #fff;
+    border-radius: 99px;
+    font-size: 10px;
+    font-weight: 700;
+    min-width: 16px;
+    height: 16px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0 4px;
+    border: 1.5px solid var(--bg);
+    display: none;
+}
+
+.app-badge.visible { display: flex; }
+
+/* ============================================================
+   Dock
+   ============================================================ */
+#dock {
+    margin: 0 10px 10px;
+    background: rgba(255,255,255,0.06);
+    border-radius: 26px;
+    border: 1px solid var(--border);
+    padding: 10px 6px;
+    display: flex;
+    justify-content: space-around;
+    align-items: center;
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    flex-shrink: 0;
+}
+
+#dock .app-icon-label { display: none; }
+
+#dock .app-icon-img {
+    width: 52px;
+    height: 52px;
+}
+
+/* ============================================================
+   Home Indicator
+   ============================================================ */
+#home-indicator {
+    display: flex;
+    justify-content: center;
+    padding-bottom: 10px;
+    flex-shrink: 0;
+}
+
+#home-indicator-bar {
+    width: 120px;
+    height: 4px;
+    background: rgba(255,255,255,0.25);
+    border-radius: 2px;
+}
+
+/* ============================================================
+   App Frame (iframe per le app)
+   ============================================================ */
+#app-frame-container {
+    position: absolute;
+    inset: 0;
+    display: none;
+    flex-direction: column;
+    z-index: 10;
+    border-radius: 44px;
+    overflow: hidden;
+}
+
+#app-frame-container.visible {
+    display: flex;
+}
+
+#app-iframe {
+    flex: 1;
+    width: 100%;
+    border: none;
+    background: var(--bg);
+    display: block;
+}
+
+/* ============================================================
+   Overlay chiamata in arrivo (sopra tutto)
+   ============================================================ */
+#incoming-call-overlay {
+    display: none;
+    position: absolute;
+    inset: 0;
+    z-index: 50;
+    border-radius: 44px;
+    overflow: hidden;
+}
+
+#incoming-call-overlay.visible { display: block; }
+
+</style>
+</head>
+<body>
+<div id="phone-wrapper">
+  <div id="phone-body">
+
+    <!-- Dynamic Island -->
+    <div id="dynamic-island">
+      <div id="di-call-info">
+        <div class="di-dot"></div>
+        <span class="di-call-name" id="di-name">Chiamata</span>
+        <span class="di-call-timer" id="di-timer">0:00</span>
+      </div>
+    </div>
+
+    <!-- Status Bar -->
+    <div id="status-bar">
+      <span class="status-time" id="clock">00:00</span>
+      <div class="status-icons">
+        <!-- Segnale -->
+        <svg width="16" height="12" viewBox="0 0 16 12" fill="none">
+          <rect x="0"  y="8" width="3" height="4" rx="1" fill="rgba(255,255,255,0.88)"/>
+          <rect x="4"  y="5" width="3" height="7" rx="1" fill="rgba(255,255,255,0.88)"/>
+          <rect x="8"  y="3" width="3" height="9" rx="1" fill="rgba(255,255,255,0.88)"/>
+          <rect x="12" y="0" width="3" height="12" rx="1" fill="rgba(255,255,255,0.88)"/>
+        </svg>
+        <!-- WiFi -->
+        <svg width="16" height="12" viewBox="0 0 16 12" fill="none">
+          <path d="M8 9a1.5 1.5 0 110 3 1.5 1.5 0 010-3z" fill="rgba(255,255,255,0.88)"/>
+          <path d="M4.2 6.8C5.2 5.8 6.5 5.2 8 5.2s2.8.6 3.8 1.6" stroke="rgba(255,255,255,0.88)" stroke-width="1.5" stroke-linecap="round" fill="none"/>
+          <path d="M1.5 4.1C3.1 2.5 5.4 1.5 8 1.5s4.9 1 6.5 2.6" stroke="rgba(255,255,255,0.88)" stroke-width="1.5" stroke-linecap="round" fill="none"/>
+        </svg>
+        <!-- Batteria -->
+        <svg width="22" height="12" viewBox="0 0 22 12" fill="none">
+          <rect x="0.5" y="0.5" width="17" height="11" rx="3" stroke="rgba(255,255,255,0.5)"/>
+          <rect x="2" y="2" width="13" height="8" rx="2" fill="rgba(255,255,255,0.88)"/>
+          <path d="M18.5 4v4" stroke="rgba(255,255,255,0.5)" stroke-width="1.5" stroke-linecap="round"/>
+        </svg>
+      </div>
+    </div>
+
+    <!-- Home Screen -->
+    <div id="home-screen">
+
+      <!-- Data -->
+      <div id="home-date">
+        <div class="date-day-name" id="day-name">Lunedì</div>
+        <div class="date-day-number" id="day-number">1</div>
+      </div>
+
+      <!-- Area notifiche (max 2) -->
+      <div id="notifications-area"></div>
+
+      <!-- Griglia app 4x3 -->
+      <div id="app-grid">
+        <!-- Messaggi -->
+        <div class="app-icon" data-app="messages">
+          <div class="app-icon-img" style="background:linear-gradient(145deg,#1a6b2e,#34c759)">
+            <svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"/>
+            </svg>
+          </div>
+          <span class="app-icon-label">Messaggi</span>
+          <div class="app-badge" id="badge-messages">0</div>
+        </div>
+        <!-- Telefono -->
+        <div class="app-icon" data-app="calls">
+          <div class="app-icon-img" style="background:linear-gradient(145deg,#1a6b2e,#34c759)">
+            <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M22 16.92v3a2 2 0 01-2.18 2 19.79 19.79 0 01-8.63-3.07A19.5 19.5 0 013.79 12a19.79 19.79 0 01-3.07-8.67A2 2 0 012.7 1.28h3a2 2 0 012 1.72c.127.96.361 1.903.7 2.81a2 2 0 01-.45 2.11L6.91 9a16 16 0 006 6l1.27-1.27a2 2 0 012.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0122 16.92z"/>
+            </svg>
+          </div>
+          <span class="app-icon-label">Telefono</span>
+          <div class="app-badge" id="badge-calls">0</div>
+        </div>
+        <!-- Banca -->
+        <div class="app-icon" data-app="bank">
+          <div class="app-icon-img" style="background:linear-gradient(145deg,#0a5c9e,#0a84ff)">
+            <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2V9z"/>
+              <polyline points="9 22 9 12 15 12 15 22"/>
+            </svg>
+          </div>
+          <span class="app-icon-label">Banca</span>
+        </div>
+        <!-- Contatti -->
+        <div class="app-icon" data-app="contacts">
+          <div class="app-icon-img" style="background:linear-gradient(145deg,#8c3a00,#ff9f0a)">
+            <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/>
+              <circle cx="9" cy="7" r="4"/>
+              <path d="M23 21v-2a4 4 0 00-3-3.87M16 3.13a4 4 0 010 7.75"/>
+            </svg>
+          </div>
+          <span class="app-icon-label">Contatti</span>
+        </div>
+        <!-- Mappe -->
+        <div class="app-icon" data-app="maps">
+          <div class="app-icon-img" style="background:linear-gradient(145deg,#00516b,#32ade6)">
+            <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+              <polygon points="3 6 9 3 15 6 21 3 21 18 15 21 9 18 3 21"/>
+              <line x1="9" y1="3" x2="9" y2="18"/><line x1="15" y1="6" x2="15" y2="21"/>
+            </svg>
+          </div>
+          <span class="app-icon-label">Mappe</span>
+        </div>
+        <!-- Foto -->
+        <div class="app-icon" data-app="photos">
+          <div class="app-icon-img" style="background:linear-gradient(145deg,#6e0000,#ff453a)">
+            <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+              <rect x="3" y="3" width="18" height="18" rx="2" ry="2"/>
+              <circle cx="8.5" cy="8.5" r="1.5"/>
+              <polyline points="21 15 16 10 5 21"/>
+            </svg>
+          </div>
+          <span class="app-icon-label">Foto</span>
+        </div>
+        <!-- Note -->
+        <div class="app-icon" data-app="notes">
+          <div class="app-icon-img" style="background:linear-gradient(145deg,#7a5a00,#ffd60a)">
+            <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/>
+              <polyline points="14 2 14 8 20 8"/>
+              <line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/>
+              <polyline points="10 9 9 9 8 9"/>
+            </svg>
+          </div>
+          <span class="app-icon-label">Note</span>
+        </div>
+        <!-- Radio -->
+        <div class="app-icon" data-app="radio">
+          <div class="app-icon-img" style="background:linear-gradient(145deg,#3d0a6b,#bf5af2)">
+            <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+              <circle cx="12" cy="12" r="2"/>
+              <path d="M16.24 7.76a6 6 0 010 8.49M7.76 16.24a6 6 0 010-8.49M20.66 3.34a12 12 0 010 16.97M3.34 3.34a12 12 0 000 16.97"/>
+            </svg>
+          </div>
+          <span class="app-icon-label">Radio</span>
+        </div>
+        <!-- Garage -->
+        <div class="app-icon" data-app="garage">
+          <div class="app-icon-img" style="background:linear-gradient(145deg,#004a52,#30d158)">
+            <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+              <rect x="1" y="3" width="15" height="13" rx="1"/>
+              <path d="M16 8h4l3 4v4h-7V8z"/>
+              <circle cx="5.5" cy="18.5" r="2.5"/><circle cx="18.5" cy="18.5" r="2.5"/>
+            </svg>
+          </div>
+          <span class="app-icon-label">Garage</span>
+        </div>
+        <!-- MDT -->
+        <div class="app-icon" data-app="mdt">
+          <div class="app-icon-img" style="background:linear-gradient(145deg,#001a5c,#0a84ff)">
+            <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+              <rect x="2" y="3" width="20" height="14" rx="2" ry="2"/>
+              <line x1="8" y1="21" x2="16" y2="21"/>
+              <line x1="12" y1="17" x2="12" y2="21"/>
+            </svg>
+          </div>
+          <span class="app-icon-label">MDT</span>
+        </div>
+        <!-- Dark Web -->
+        <div class="app-icon" data-app="darkweb">
+          <div class="app-icon-img" style="background:linear-gradient(145deg,#1a1a1a,#333)">
+            <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.6)" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+              <circle cx="12" cy="12" r="10"/>
+              <line x1="2" y1="12" x2="22" y2="12"/>
+              <path d="M12 2a15.3 15.3 0 014 10 15.3 15.3 0 01-4 10 15.3 15.3 0 01-4-10 15.3 15.3 0 014-10z"/>
+            </svg>
+          </div>
+          <span class="app-icon-label">Dark Web</span>
+        </div>
+        <!-- Impostazioni -->
+        <div class="app-icon" data-app="settings">
+          <div class="app-icon-img" style="background:linear-gradient(145deg,#2a2a2a,#636366)">
+            <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+              <circle cx="12" cy="12" r="3"/>
+              <path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 010 2.83 2 2 0 01-2.83 0l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-4 0v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 01-2.83-2.83l.06-.06A1.65 1.65 0 004.68 15a1.65 1.65 0 00-1.51-1H3a2 2 0 010-4h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 012.83-2.83l.06.06A1.65 1.65 0 009 4.68a1.65 1.65 0 001-1.51V3a2 2 0 014 0v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 012.83 2.83l-.06.06A1.65 1.65 0 0019.4 9a1.65 1.65 0 001.51 1H21a2 2 0 010 4h-.09a1.65 1.65 0 00-1.51 1z"/>
+            </svg>
+          </div>
+          <span class="app-icon-label">Impostazioni</span>
+        </div>
+      </div>
+
+      <!-- Dock -->
+      <div id="dock">
+        <div class="app-icon" data-app="calls">
+          <div class="app-icon-img" style="background:linear-gradient(145deg,#1a6b2e,#34c759)">
+            <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M22 16.92v3a2 2 0 01-2.18 2 19.79 19.79 0 01-8.63-3.07A19.5 19.5 0 013.79 12a19.79 19.79 0 01-3.07-8.67A2 2 0 012.7 1.28h3a2 2 0 012 1.72c.127.96.361 1.903.7 2.81a2 2 0 01-.45 2.11L6.91 9a16 16 0 006 6l1.27-1.27a2 2 0 012.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0122 16.92z"/>
+            </svg>
+          </div>
+        </div>
+        <div class="app-icon" data-app="messages">
+          <div class="app-icon-img" style="background:linear-gradient(145deg,#1a6b2e,#34c759)">
+            <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"/>
+            </svg>
+          </div>
+        </div>
+        <div class="app-icon" data-app="bank">
+          <div class="app-icon-img" style="background:linear-gradient(145deg,#0a5c9e,#0a84ff)">
+            <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2V9z"/>
+              <polyline points="9 22 9 12 15 12 15 22"/>
+            </svg>
+          </div>
+        </div>
+        <div class="app-icon" data-app="contacts">
+          <div class="app-icon-img" style="background:linear-gradient(145deg,#8c3a00,#ff9f0a)">
+            <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/>
+              <circle cx="9" cy="7" r="4"/>
+              <path d="M23 21v-2a4 4 0 00-3-3.87M16 3.13a4 4 0 010 7.75"/>
+            </svg>
+          </div>
+        </div>
+      </div>
+
+      <!-- Home Indicator -->
+      <div id="home-indicator">
+        <div id="home-indicator-bar"></div>
+      </div>
+    </div><!-- /home-screen -->
+
+    <!-- Contenitore iframe per le app -->
+    <div id="app-frame-container">
+      <iframe id="app-iframe" allowtransparency="true"></iframe>
+    </div>
+
+  </div><!-- /phone-body -->
+</div><!-- /phone-wrapper -->
+
+<script src="app.js"></script>
+</body>
+</html>
