@@ -1,0 +1,208 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AT Phone — Anteprima Dev</title>
+<link rel="stylesheet" href="../at-phone/ui/style.css">
+<style>
+body {
+    margin: 0;
+    background: #1a1a2e;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    font-family: -apple-system, sans-serif;
+}
+
+/* Override: mostra il telefono centrato in modalità dev */
+#phone-wrapper {
+    position: relative !important;
+    bottom: auto !important;
+    right: auto !important;
+    transform: none !important;
+    opacity: 1 !important;
+    pointer-events: all !important;
+    transition: none !important;
+}
+
+#phone-wrapper.open {
+    transform: none !important;
+}
+
+.dev-bar {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    background: rgba(0,0,0,0.85);
+    backdrop-filter: blur(10px);
+    border-bottom: 1px solid rgba(52,199,89,0.3);
+    padding: 8px 20px;
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    z-index: 99999;
+    font-size: 13px;
+    color: rgba(255,255,255,0.7);
+    flex-wrap: wrap;
+}
+
+.dev-badge {
+    background: rgba(52,199,89,0.15);
+    color: #34c759;
+    border: 1px solid rgba(52,199,89,0.3);
+    border-radius: 6px;
+    padding: 2px 8px;
+    font-weight: 600;
+    font-size: 11px;
+}
+
+.dev-btn {
+    background: rgba(255,255,255,0.08);
+    border: 1px solid rgba(255,255,255,0.12);
+    border-radius: 6px;
+    color: rgba(255,255,255,0.8);
+    padding: 4px 10px;
+    cursor: pointer;
+    font-size: 12px;
+    font-family: inherit;
+    transition: background 0.15s;
+}
+
+.dev-btn:hover { background: rgba(255,255,255,0.14); }
+.dev-btn:active { background: rgba(255,255,255,0.2); }
+
+.dev-sep { opacity: 0.2; }
+
+.dev-tip {
+    margin-left: auto;
+    font-size: 12px;
+    opacity: 0.4;
+}
+</style>
+</head>
+<body>
+
+<!-- Barra sviluppatore -->
+<div class="dev-bar">
+    <span class="dev-badge">DEV PREVIEW</span>
+    <span>AT Phone</span>
+    <span class="dev-sep">|</span>
+    <button class="dev-btn" onclick="simulateIncomingCall()">📞 Chiamata in arrivo</button>
+    <button class="dev-btn" onclick="simulateMessage()">💬 Messaggio in arrivo</button>
+    <button class="dev-btn" onclick="simulateNotification()">🔔 Notifica</button>
+    <span class="dev-tip">Premi F2 per aprire/chiudere il telefono</span>
+</div>
+
+<!-- Carica il mock PRIMA dell'HTML del telefono -->
+<script src="mock.js"></script>
+
+<!-- Includi il telefono via script dinamico per riutilizzare index.html -->
+<script>
+// Carica il contenuto di index.html via fetch e inserisce solo il body
+fetch('../at-phone/ui/index.html')
+    .then(r => r.text())
+    .then(html => {
+        const parser = new DOMParser();
+        const doc    = parser.parseFromString(html, 'text/html');
+
+        // Copia gli stili del <head>
+        doc.querySelectorAll('style').forEach(s => {
+            document.head.appendChild(s.cloneNode(true));
+        });
+
+        // Inserisce il body (esclude i tag script già caricati)
+        const bodyContent = doc.body.innerHTML;
+        const container   = document.createElement('div');
+        container.innerHTML = bodyContent;
+
+        // Rimuovi tag script (verranno eseguiti dopo)
+        const scripts = [];
+        container.querySelectorAll('script').forEach(s => {
+            scripts.push(s.src || s.textContent);
+            s.remove();
+        });
+
+        document.body.appendChild(container);
+
+        // Esegui gli script in ordine (risolvi i path relativi rispetto alla ui/)
+        const UI_BASE = '../at-phone/ui/';
+        scripts.reduce((chain, src) => chain.then(() => {
+            return new Promise(resolve => {
+                if (src.startsWith('http') || src.endsWith('.js')) {
+                    const el = document.createElement('script');
+                    // Se il path non è assoluto, lo prefissa con la cartella ui
+                    el.src = src.startsWith('http') ? src : UI_BASE + src;
+                    el.onload = resolve;
+                    el.onerror = resolve;
+                    document.head.appendChild(el);
+                } else {
+                    const el = document.createElement('script');
+                    el.textContent = src;
+                    document.head.appendChild(el);
+                    resolve();
+                }
+            });
+        }), Promise.resolve());
+    })
+    .catch(err => {
+        document.body.innerHTML += `<div style="color:#ff453a;padding:40px;text-align:center">
+            <b>Errore caricamento:</b> ${err.message}<br><br>
+            Assicurati di avviare un server HTTP locale.<br>
+            <code style="background:rgba(255,255,255,0.1);padding:8px 14px;border-radius:6px;display:inline-block;margin-top:12px">
+                python3 -m http.server 8080
+            </code>
+        </div>`;
+    });
+
+// ── Funzioni di test dalla dev bar ──────────────────────────
+function simulateIncomingCall() {
+    window.dispatchEvent(new MessageEvent('message', {
+        data: {
+            type: 'incomingCall',
+            data: { callId: 'dev-call-' + Date.now(), callerNumber: '555-9876', callerName: 'Sconosciuto' }
+        },
+        source: window
+    }));
+}
+
+function simulateMessage() {
+    window.dispatchEvent(new MessageEvent('message', {
+        data: {
+            type: 'messageReceived',
+            message: {
+                id: Date.now(),
+                senderNumber: '555-2000',
+                receiverNumber: '555-1337',
+                type: 'text',
+                content: 'Messaggio di test — ' + new Date().toLocaleTimeString('it-IT'),
+                sentAt: new Date().toISOString(),
+            }
+        },
+        source: window
+    }));
+}
+
+function simulateNotification() {
+    window.dispatchEvent(new MessageEvent('message', {
+        data: {
+            type: 'messageReceived',
+            message: {
+                id: Date.now(),
+                senderNumber: '555-4002',
+                receiverNumber: '555-1337',
+                type: 'text',
+                content: 'Hai un messaggio urgente!',
+                sentAt: new Date().toISOString(),
+            }
+        },
+        source: window
+    }));
+}
+</script>
+
+</body>
+</html>
