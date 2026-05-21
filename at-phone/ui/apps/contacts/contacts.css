@@ -33,10 +33,7 @@ body {
   transform: translateX(-30%);
 }
 
-/* First screen starts fully visible */
-#screen-list {
-  transform: translateX(0);
-}
+/* Prima schermata: ha già class="screen active" nell'HTML */
 
 /* ============================================================
    Navbar elements

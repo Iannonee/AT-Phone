@@ -12,17 +12,23 @@ body {
 
 /* ============================================================
    Call states — only one visible at a time
+   display:flex always, visibility controls show/hide
    ============================================================ */
 .call-state {
   position: absolute;
   top: 0; left: 0; right: 0; bottom: 0;
-  display: none;
+  display: flex;
   flex-direction: column;
   background: var(--bg);
+  visibility: hidden;
+  pointer-events: none;
+  z-index: 0;
 }
 
 .call-state.active {
-  display: flex;
+  visibility: visible;
+  pointer-events: all;
+  z-index: 1;
 }
 
 /* ============================================================

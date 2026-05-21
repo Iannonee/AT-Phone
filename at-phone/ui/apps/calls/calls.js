@@ -91,19 +91,15 @@ function handleNUIMessage(msg) {
 }
 
 /* ============================================================
-   State switching
+   State switching — solo class toggling, niente inline style
    ============================================================ */
 function showState(id) {
   var states = document.querySelectorAll('.call-state');
   for (var i = 0; i < states.length; i++) {
     states[i].classList.remove('active');
-    states[i].style.display = 'none';
   }
   var target = document.getElementById('state-' + id);
-  if (target) {
-    target.classList.add('active');
-    target.style.display = 'flex';
-  }
+  if (target) target.classList.add('active');
   currentState = id;
 }
 

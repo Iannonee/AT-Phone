@@ -28,8 +28,7 @@ body {
 .screen.active { transform: translateX(0); }
 .screen.prev   { transform: translateX(-30%); }
 
-/* Prima schermata parte visibile */
-#screen-list { transform: translateX(0); }
+/* Prima schermata: ha già class="screen active" nell'HTML */
 
 /* ============================================================
    Lista conversazioni

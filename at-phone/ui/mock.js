@@ -65,7 +65,7 @@
 
     // ── Gestore mock ────────────────────────────────────────
     async function mockHandler(action, payload) {
-        await delay(80); // latenza realistica
+        await delay(20); // latenza minima per dev
 
         switch (action) {
             case 'requestPhone':
