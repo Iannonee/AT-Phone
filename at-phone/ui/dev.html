@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>AT Phone — Anteprima Dev</title>
-<link rel="stylesheet" href="../at-phone/ui/style.css">
+<link rel="stylesheet" href="style.css">
 <style>
 body {
     margin: 0;
@@ -103,7 +103,7 @@ body {
 <!-- Includi il telefono via script dinamico per riutilizzare index.html -->
 <script>
 // Carica il contenuto di index.html via fetch e inserisce solo il body
-fetch('../at-phone/ui/index.html')
+fetch('index.html')
     .then(r => r.text())
     .then(html => {
         const parser = new DOMParser();
@@ -128,14 +128,12 @@ fetch('../at-phone/ui/index.html')
 
         document.body.appendChild(container);
 
-        // Esegui gli script in ordine (risolvi i path relativi rispetto alla ui/)
-        const UI_BASE = '../at-phone/ui/';
+        // Esegui gli script in ordine
         scripts.reduce((chain, src) => chain.then(() => {
             return new Promise(resolve => {
                 if (src.startsWith('http') || src.endsWith('.js')) {
                     const el = document.createElement('script');
-                    // Se il path non è assoluto, lo prefissa con la cartella ui
-                    el.src = src.startsWith('http') ? src : UI_BASE + src;
+                    el.src = src;
                     el.onload = resolve;
                     el.onerror = resolve;
                     document.head.appendChild(el);
