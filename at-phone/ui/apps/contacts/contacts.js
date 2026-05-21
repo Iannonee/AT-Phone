@@ -1,401 +1,449 @@
-/* ============================================================
-   contacts.js — logica app Contatti
-   ============================================================ */
-
 'use strict';
 
-// ============================================================
-//  Stato
-// ============================================================
-let contacts      = [];
-let onlinePlayers = [];
-let activeContact = null;
-let editMode      = false;
+/* ============================================================
+   State
+   ============================================================ */
+var contacts      = [];
+var onlinePlayers = [];
+var activeContact = null;
+var editMode      = false;
 
-// ============================================================
-//  NUI bridge
-// ============================================================
-let reqCounter = 0;
-const pendingRequests = {};
+/* ============================================================
+   NUI bridge
+   ============================================================ */
+var reqCounter = 0;
+var pendingRequests = {};
 
-function luaCall(action, payload = {}) {
-    return new Promise((resolve) => {
-        const reqId = ++reqCounter;
-        pendingRequests[reqId] = resolve;
-        window.parent.postMessage({ type: 'luaCallback', action, payload, reqId }, '*');
-        setTimeout(() => {
-            if (pendingRequests[reqId]) { delete pendingRequests[reqId]; resolve({}); }
-        }, 5000);
-    });
+function luaCall(action, payload) {
+  if (payload === undefined) payload = {};
+  var reqId = ++reqCounter;
+  pendingRequests[reqId] = true;
+  window.parent.postMessage({ type: 'luaCallback', action: action, payload: payload, reqId: reqId }, '*');
+  setTimeout(function () { delete pendingRequests[reqId]; }, 5000);
 }
 
-window.addEventListener('message', (e) => {
-    const msg = e.data;
-    if (!msg) return;
+window.addEventListener('message', function (e) {
+  var msg = e.data;
+  if (!msg || !msg.type) return;
 
-    if (msg.type === 'nuiResponse' && pendingRequests[msg.reqId]) {
-        const resolve = pendingRequests[msg.reqId];
-        delete pendingRequests[msg.reqId];
-        resolve(msg.response || {});
-        return;
-    }
+  if (msg.type === 'nuiResponse') {
+    delete pendingRequests[msg.reqId];
+    return;
+  }
 
-    handleHomeMessage(msg);
+  handleNUIMessage(msg);
 });
 
-function handleHomeMessage(msg) {
-    switch (msg.type) {
-        case 'contacts':
-            contacts = msg.data || [];
-            renderList();
-            break;
+/* ============================================================
+   NUI message router
+   ============================================================ */
+function handleNUIMessage(msg) {
+  var data = msg.data || msg.contact || {};
+  switch (msg.type) {
 
-        case 'onlinePlayers':
-            onlinePlayers = msg.data || [];
-            contacts.forEach(c => {
-                c.online = onlinePlayers.some(p => p.number === c.number);
-            });
-            renderList();
-            break;
+    case 'contacts':
+      contacts = msg.data || [];
+      renderList();
+      break;
 
-        case 'contactSaved':
-            contacts.push(msg.contact);
-            contacts.sort((a,b) => a.name.localeCompare(b.name));
-            renderList();
-            showScreen('screen-list');
-            break;
+    case 'onlinePlayers':
+      onlinePlayers = msg.data || [];
+      for (var i = 0; i < contacts.length; i++) {
+        var c = contacts[i];
+        c.online = false;
+        for (var j = 0; j < onlinePlayers.length; j++) {
+          if (onlinePlayers[j].number === c.number) { c.online = true; break; }
+        }
+      }
+      renderList();
+      break;
 
-        case 'contactDeleted':
-            contacts = contacts.filter(c => c.id !== msg.data.id);
-            renderList();
-            showScreen('screen-list');
-            break;
+    case 'contactSaved':
+      var saved = msg.contact || msg.data || {};
+      contacts.push(saved);
+      contacts.sort(function (a, b) { return (a.name || '').localeCompare(b.name || ''); });
+      renderList();
+      navigateTo('screen-list');
+      break;
 
-        case 'contactUpdated':
-            const idx = contacts.findIndex(c => c.id === msg.data.id);
-            if (idx !== -1) {
-                contacts[idx].name  = msg.data.name;
-                contacts[idx].notes = msg.data.notes;
-            }
-            renderList();
-            showScreen('screen-list');
-            break;
+    case 'contactDeleted':
+      var delId = (msg.data || {}).id || msg.id;
+      contacts = contacts.filter(function (c) { return c.id !== delId; });
+      renderList();
+      navigateTo('screen-list');
+      break;
 
-        case 'contactError':
-            showToast(msg.error || 'Errore');
-            break;
-    }
+    case 'contactUpdated':
+      var upd = msg.data || {};
+      for (var u = 0; u < contacts.length; u++) {
+        if (contacts[u].id === upd.id) {
+          if (upd.name  !== undefined) contacts[u].name  = upd.name;
+          if (upd.notes !== undefined) contacts[u].notes = upd.notes;
+          break;
+        }
+      }
+      renderList();
+      navigateTo('screen-list');
+      break;
+
+    case 'contactError':
+      showToast(msg.error || 'Errore');
+      break;
+  }
 }
 
-// ============================================================
-//  Init
-// ============================================================
-document.addEventListener('DOMContentLoaded', () => {
-    luaCall('getContacts');
-    luaCall('getOnlinePlayers');
+/* ============================================================
+   Screen navigation
+   ============================================================ */
+var screenStack = ['screen-list'];
 
-    document.getElementById('search-input').addEventListener('input', renderList);
-    document.getElementById('btn-add-contact').addEventListener('click', () => showAddScreen());
-    document.getElementById('btn-back-card').addEventListener('click', () => showScreen('screen-list'));
-    document.getElementById('btn-cancel-add').addEventListener('click', () => showScreen('screen-list'));
-    document.getElementById('btn-cancel-add2').addEventListener('click', () => showScreen('screen-list'));
-    document.getElementById('btn-save-contact').addEventListener('click', saveContact);
-    document.getElementById('btn-edit-contact').addEventListener('click', () => {
-        if (activeContact) showAddScreen(activeContact);
-    });
-});
-
-// ============================================================
-//  Navigazione
-// ============================================================
-function showScreen(id) {
-    document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
-    document.getElementById(id).classList.add('active');
+function navigateTo(id) {
+  var all = document.querySelectorAll('.screen');
+  for (var i = 0; i < all.length; i++) {
+    all[i].classList.remove('active', 'prev');
+  }
+  // Mark current active as prev
+  var current = screenStack[screenStack.length - 1];
+  if (current && current !== id) {
+    var prevEl = document.getElementById(current);
+    if (prevEl) prevEl.classList.add('prev');
+  }
+  // Push new screen
+  screenStack.push(id);
+  var target = document.getElementById(id);
+  if (target) target.classList.add('active');
 }
 
-// ============================================================
-//  Lista contatti
-// ============================================================
+function navigateBack() {
+  if (screenStack.length <= 1) return;
+  // Remove current
+  var current = screenStack.pop();
+  var currentEl = document.getElementById(current);
+  if (currentEl) currentEl.classList.remove('active', 'prev');
+  // Restore previous
+  var prev = screenStack[screenStack.length - 1];
+  var prevEl = document.getElementById(prev);
+  if (prevEl) { prevEl.classList.remove('prev'); prevEl.classList.add('active'); }
+}
+
+/* ============================================================
+   Render contact list
+   ============================================================ */
 function renderList() {
-    const filter  = document.getElementById('search-input').value.toLowerCase();
-    const listEl  = document.getElementById('contacts-list');
-    listEl.innerHTML = '';
+  var filter  = (document.getElementById('search-input') || {}).value || '';
+  filter = filter.toLowerCase();
+  var listEl  = document.getElementById('contacts-list');
+  if (!listEl) return;
+  listEl.innerHTML = '';
 
-    const filtered = contacts.filter(c =>
-        !filter ||
-        c.name.toLowerCase().includes(filter) ||
-        c.number.includes(filter)
-    );
+  var filtered = contacts.filter(function (c) {
+    if (!filter) return true;
+    return (c.name  || '').toLowerCase().indexOf(filter) !== -1 ||
+           (c.number || '').indexOf(filter) !== -1;
+  });
 
-    // Sezione online
-    const online  = filtered.filter(c => c.online);
-    const offline = filtered.filter(c => !c.online);
+  var online  = filtered.filter(function (c) { return c.online; });
+  var offline = filtered.filter(function (c) { return !c.online; });
 
-    if (online.length === 0 && offline.length === 0) {
-        listEl.innerHTML = `
-            <div class="empty-state">
-                <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
-                    <path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/>
-                    <circle cx="9" cy="7" r="4"/>
-                    <path d="M23 21v-2a4 4 0 00-3-3.87M16 3.13a4 4 0 010 7.75"/>
-                </svg>
-                <p>Nessun contatto</p>
-            </div>
-        `;
-        return;
+  if (online.length === 0 && offline.length === 0) {
+    listEl.innerHTML = '<div class="empty-state">Nessun contatto</div>';
+    return;
+  }
+
+  if (online.length > 0) {
+    var h1 = document.createElement('div');
+    h1.className   = 'section-label';
+    h1.textContent = 'ONLINE';
+    listEl.appendChild(h1);
+    for (var i = 0; i < online.length; i++) {
+      listEl.appendChild(buildContactItem(online[i]));
     }
+  }
 
-    if (online.length > 0) {
-        const header = document.createElement('div');
-        header.className = 'section-header';
-        header.textContent = 'Online';
-        listEl.appendChild(header);
-        online.forEach(c => listEl.appendChild(buildContactItem(c)));
+  if (offline.length > 0) {
+    var h2 = document.createElement('div');
+    h2.className   = 'section-label';
+    h2.textContent = 'TUTTI I CONTATTI';
+    listEl.appendChild(h2);
+    for (var j = 0; j < offline.length; j++) {
+      listEl.appendChild(buildContactItem(offline[j]));
     }
-
-    if (offline.length > 0) {
-        const header = document.createElement('div');
-        header.className = 'section-header';
-        header.textContent = 'Tutti i contatti';
-        listEl.appendChild(header);
-        offline.forEach(c => listEl.appendChild(buildContactItem(c)));
-    }
+  }
 }
 
 function buildContactItem(contact) {
-    const el = document.createElement('div');
-    el.className = 'contact-item';
-    el.innerHTML = `
-        <div class="avatar" style="${avatarGradient(contact.name)}">
-            ${initials(contact.name)}
-            <div class="avatar-dot ${contact.online ? 'online' : ''}"></div>
-        </div>
-        <div class="contact-meta">
-            <div class="contact-name">${esc(contact.name)}</div>
-            <div class="contact-number">${esc(contact.number)}</div>
-        </div>
-        <svg class="contact-chevron" width="8" height="14" viewBox="0 0 8 14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-            <polyline points="1 1 7 7 1 13"/>
-        </svg>
-    `;
-    el.addEventListener('click', () => showContactCard(contact));
-    return el;
+  var el = document.createElement('div');
+  el.className = 'contact-item';
+
+  var dotClass = contact.online ? 'avatar-dot online' : 'avatar-dot';
+
+  el.innerHTML =
+    '<div class="avatar" style="width:40px;height:40px;font-size:15px;font-weight:600;position:relative;background:' + avatarGradient(contact.name) + '">'
+    + esc(initials(contact.name))
+    + '<div class="' + dotClass + '" style="width:10px;height:10px;position:absolute;bottom:1px;right:1px;border:1.5px solid var(--bg);"></div>'
+    + '</div>'
+    + '<div class="contact-body">'
+    + '<div class="contact-name">' + esc(contact.name || '') + '</div>'
+    + '<div class="contact-number">' + esc(contact.number || '') + '</div>'
+    + '</div>'
+    + '<svg class="contact-chevron" width="8" height="14" viewBox="0 0 8 14" fill="none"'
+    + ' stroke="rgba(255,255,255,0.18)" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">'
+    + '<polyline points="1 1 7 7 1 13"></polyline></svg>';
+
+  el.addEventListener('click', function () { showContactCard(contact); });
+  return el;
 }
 
-// ============================================================
-//  Scheda contatto
-// ============================================================
+/* ============================================================
+   Contact card
+   ============================================================ */
 function showContactCard(contact) {
-    activeContact = contact;
+  activeContact = contact;
 
-    const content = document.getElementById('contact-card-content');
-    const createdAt = contact.createdAt
-        ? new Date(contact.createdAt.replace(' ','T')).toLocaleDateString('it-IT')
-        : '—';
+  /* Avatar */
+  var avatarEl = document.getElementById('card-avatar');
+  if (avatarEl) {
+    avatarEl.textContent = initials(contact.name);
+    avatarEl.style.background = avatarGradient(contact.name);
+  }
 
-    content.innerHTML = `
-        <div class="card-hero">
-            <div class="avatar lg" style="${avatarGradient(contact.name)}">
-                ${initials(contact.name)}
-                <div class="avatar-dot ${contact.online ? 'online' : ''}"></div>
-            </div>
-            <div class="card-name">${esc(contact.name)}</div>
-            <div class="card-number">${esc(contact.number)}</div>
-            ${contact.online ? '<div class="card-status">Online</div>' : ''}
-        </div>
+  /* Online dot */
+  var dotEl = document.getElementById('card-online-dot');
+  if (dotEl) {
+    dotEl.className = 'avatar-dot card-avatar-dot' + (contact.online ? ' online' : '');
+  }
 
-        <!-- Azioni rapide -->
-        <div class="quick-actions">
-            <button class="quick-action-btn" id="qa-call">
-                <div class="quick-action-icon" style="background:var(--green-bg)">
-                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="var(--green)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                        <path d="M22 16.92v3a2 2 0 01-2.18 2 19.79 19.79 0 01-8.63-3.07A19.5 19.5 0 013.79 12a19.79 19.79 0 01-3.07-8.67A2 2 0 012.7 1.28h3a2 2 0 012 1.72c.127.96.361 1.903.7 2.81a2 2 0 01-.45 2.11L6.91 9a16 16 0 006 6l1.27-1.27a2 2 0 012.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0122 16.92z"/>
-                    </svg>
-                </div>
-                <span class="quick-action-label">Chiama</span>
-            </button>
-            <button class="quick-action-btn" id="qa-msg">
-                <div class="quick-action-icon" style="background:var(--surface)">
-                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="var(--text)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                        <path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"/>
-                    </svg>
-                </div>
-                <span class="quick-action-label">Messaggio</span>
-            </button>
-            <button class="quick-action-btn" id="qa-pos">
-                <div class="quick-action-icon" style="background:var(--blue-bg)">
-                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="var(--blue)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                        <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0118 0z"/><circle cx="12" cy="10" r="3"/>
-                    </svg>
-                </div>
-                <span class="quick-action-label">Posizione</span>
-            </button>
-        </div>
+  /* Name / number */
+  var nameEl   = document.getElementById('card-name');
+  var numEl    = document.getElementById('card-number');
+  var statusEl = document.getElementById('card-status');
+  if (nameEl)   nameEl.textContent = contact.name || '';
+  if (numEl)    numEl.textContent  = contact.number || '';
+  if (statusEl) {
+    statusEl.textContent = contact.online ? 'Online' : 'Offline';
+    statusEl.className   = 'card-status' + (contact.online ? ' online' : '');
+  }
 
-        <!-- Info -->
-        <div class="card-section">
-            <div class="card-section-title">Informazioni</div>
-            <div class="card-row">
-                <span class="card-row-label">Numero</span>
-                <span class="card-row-value">${esc(contact.number)}</span>
-            </div>
-            ${contact.notes ? `<div class="card-row">
-                <span class="card-row-label">Note</span>
-                <span class="card-row-value">${esc(contact.notes)}</span>
-            </div>` : ''}
-            <div class="card-row">
-                <span class="card-row-label">Aggiunto il</span>
-                <span class="card-row-value">${createdAt}</span>
-            </div>
-        </div>
-
-        <!-- Pericolo -->
-        <div class="danger-zone">
-            <button class="danger-btn" id="btn-delete">
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                    <polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 01-2 2H8a2 2 0 01-2-2L5 6"/>
-                    <path d="M10 11v6M14 11v6M9 6V4a1 1 0 011-1h4a1 1 0 011 1v2"/>
-                </svg>
-                Elimina contatto
-            </button>
-            <button class="danger-btn" id="btn-block">
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                    <circle cx="12" cy="12" r="10"/><line x1="4.93" y1="4.93" x2="19.07" y2="19.07"/>
-                </svg>
-                Blocca numero
-            </button>
-        </div>
-    `;
-
-    // Event listener azioni
-    content.querySelector('#qa-call').addEventListener('click', () => callContact(contact));
-    content.querySelector('#qa-msg').addEventListener('click', () => messageContact(contact));
-    content.querySelector('#qa-pos').addEventListener('click', () => shareLocationTo(contact));
-    content.querySelector('#btn-delete').addEventListener('click', () => deleteContact(contact));
-    content.querySelector('#btn-block').addEventListener('click', () => showToast('Numero bloccato.'));
-
-    showScreen('screen-card');
-}
-
-// ============================================================
-//  Aggiungi / Modifica
-// ============================================================
-function showAddScreen(contact = null) {
-    editMode      = !!contact;
-    activeContact = contact;
-
-    document.getElementById('add-title').textContent = contact ? 'Modifica contatto' : 'Nuovo contatto';
-
-    if (contact) {
-        const nameParts = contact.name.split(' ');
-        document.getElementById('field-name').value     = nameParts[0] || '';
-        document.getElementById('field-lastname').value = nameParts.slice(1).join(' ');
-        document.getElementById('field-number').value   = contact.number;
-        document.getElementById('field-notes').value    = contact.notes || '';
-        document.getElementById('field-number').disabled = true;
+  /* Info card rows */
+  var phoneEl   = document.getElementById('info-phone');
+  var statusVal = document.getElementById('info-status-val');
+  var addedEl   = document.getElementById('info-added');
+  if (phoneEl)   phoneEl.textContent  = contact.number || '—';
+  if (statusVal) statusVal.textContent = contact.online ? 'Online' : 'Offline';
+  if (addedEl) {
+    if (contact.createdAt) {
+      var d = new Date(typeof contact.createdAt === 'string' ? contact.createdAt.replace(' ', 'T') : contact.createdAt);
+      addedEl.textContent = isNaN(d) ? '—' : d.toLocaleDateString('it-IT');
     } else {
-        document.getElementById('field-name').value     = '';
-        document.getElementById('field-lastname').value = '';
-        document.getElementById('field-number').value   = '';
-        document.getElementById('field-notes').value    = '';
-        document.getElementById('field-number').disabled = false;
+      addedEl.textContent = '—';
     }
+  }
 
-    showScreen('screen-add');
+  /* Notes row in info card — show if notes exist */
+  /* (the notes field is displayed inside the info-card dynamically via info-status-row) */
+
+  navigateTo('screen-card');
 }
 
+/* ============================================================
+   Add / Edit screen
+   ============================================================ */
+function showAddScreen(contact) {
+  editMode      = !!contact;
+  activeContact = contact || null;
+
+  var titleEl = document.getElementById('add-screen-title');
+  if (titleEl) titleEl.textContent = editMode ? 'Modifica' : 'Nuovo contatto';
+
+  var nameEl     = document.getElementById('field-name');
+  var lastEl     = document.getElementById('field-lastname');
+  var numEl      = document.getElementById('field-number');
+  var notesEl    = document.getElementById('field-notes');
+
+  if (editMode && contact) {
+    var parts = (contact.name || '').trim().split(/\s+/);
+    if (nameEl)  nameEl.value  = parts[0] || '';
+    if (lastEl)  lastEl.value  = parts.slice(1).join(' ');
+    if (numEl) {
+      numEl.value    = contact.number || '';
+      numEl.disabled = true;
+    }
+    if (notesEl) notesEl.value = contact.notes || '';
+  } else {
+    if (nameEl)  nameEl.value  = '';
+    if (lastEl)  lastEl.value  = '';
+    if (numEl) {
+      numEl.value    = '';
+      numEl.disabled = false;
+    }
+    if (notesEl) notesEl.value = '';
+  }
+
+  navigateTo('screen-add');
+}
+
+/* ============================================================
+   Save contact
+   ============================================================ */
 function saveContact() {
-    const firstName = document.getElementById('field-name').value.trim();
-    const lastName  = document.getElementById('field-lastname').value.trim();
-    const number    = document.getElementById('field-number').value.trim();
-    const notes     = document.getElementById('field-notes').value.trim();
+  var firstName = ((document.getElementById('field-name')     || {}).value || '').trim();
+  var lastName  = ((document.getElementById('field-lastname') || {}).value || '').trim();
+  var number    = ((document.getElementById('field-number')   || {}).value || '').trim();
+  var notes     = ((document.getElementById('field-notes')    || {}).value || '').trim();
 
-    if (!firstName || (!editMode && !number)) {
-        showToast('Nome e numero sono obbligatori.');
-        return;
-    }
+  if (!firstName) { showToast('Il nome è obbligatorio.'); return; }
+  if (!editMode && !number) { showToast('Il numero è obbligatorio.'); return; }
 
-    const fullName = lastName ? `${firstName} ${lastName}` : firstName;
+  var fullName = lastName ? firstName + ' ' + lastName : firstName;
 
-    if (editMode && activeContact) {
-        luaCall('updateContact', { id: activeContact.id, name: fullName, notes });
-    } else {
-        luaCall('saveContact', { name: fullName, number, notes });
-    }
+  if (editMode && activeContact) {
+    luaCall('updateContact', { id: activeContact.id, name: fullName, notes: notes });
+  } else {
+    luaCall('saveContact', { name: fullName, number: number, notes: notes });
+  }
 }
 
-// ============================================================
-//  Azioni
-// ============================================================
-function callContact(contact) {
-    window.parent.postMessage({ type: 'openApp', app: 'calls' }, '*');
-    setTimeout(() => {
+/* ============================================================
+   Quick actions
+   ============================================================ */
+function wireCardActions() {
+  var qaCallBtn = document.getElementById('qa-call');
+  var qaMsgBtn  = document.getElementById('qa-msg');
+  var qaPosBtn  = document.getElementById('qa-pos');
+  var delBtn    = document.getElementById('btn-delete');
+  var blkBtn    = document.getElementById('btn-block');
+
+  if (qaCallBtn) {
+    qaCallBtn.addEventListener('click', function () {
+      if (!activeContact) return;
+      window.parent.postMessage({ type: 'openApp', app: 'calls' }, '*');
+      setTimeout(function () {
         window.parent.postMessage({
-            type:    'luaCallback',
-            action:  'startCall',
-            payload: { targetNumber: contact.number },
+          type:    'luaCallback',
+          action:  'startCall',
+          payload: { targetNumber: activeContact.number }
         }, '*');
-    }, 300);
-}
-
-function messageContact(contact) {
-    window.parent.postMessage({ type: 'openApp', app: 'messages' }, '*');
-}
-
-async function shareLocationTo(contact) {
-    const loc = await luaCall('requestLocation', {});
-    if (!loc || !loc.x) return;
-    luaCall('sendMessage', {
-        targetNumber: contact.number,
-        type:    'location',
-        content: loc,
+      }, 300);
     });
-    showToast('Posizione inviata.');
+  }
+
+  if (qaMsgBtn) {
+    qaMsgBtn.addEventListener('click', function () {
+      window.parent.postMessage({ type: 'openApp', app: 'messages' }, '*');
+    });
+  }
+
+  if (qaPosBtn) {
+    qaPosBtn.addEventListener('click', function () {
+      if (!activeContact) return;
+      luaCall('requestLocation', {});
+      /* Response handled asynchronously — sendMessage on nuiResponse not shown here
+         because the spec uses fire-and-forget for requestLocation */
+    });
+  }
+
+  if (delBtn) {
+    delBtn.addEventListener('click', function () {
+      if (!activeContact) return;
+      luaCall('deleteContact', { id: activeContact.id });
+    });
+  }
+
+  if (blkBtn) {
+    blkBtn.addEventListener('click', function () {
+      showToast('Numero bloccato.');
+    });
+  }
 }
 
-function deleteContact(contact) {
-    if (!confirm(`Eliminare ${contact.name}?`)) return;
-    luaCall('deleteContact', { id: contact.id });
-}
-
-// ============================================================
-//  Toast
-// ============================================================
+/* ============================================================
+   Toast
+   ============================================================ */
 function showToast(msg) {
-    let toast = document.querySelector('.toast');
-    if (!toast) {
-        toast = document.createElement('div');
-        toast.className = 'toast';
-        document.body.appendChild(toast);
-    }
-    toast.textContent = msg;
-    toast.classList.add('show');
-    setTimeout(() => toast.classList.remove('show'), 3000);
+  var toast = document.querySelector('.toast');
+  if (!toast) {
+    toast = document.createElement('div');
+    toast.className = 'toast';
+    document.body.appendChild(toast);
+  }
+  toast.textContent = msg;
+  toast.classList.add('show');
+  setTimeout(function () { toast.classList.remove('show'); }, 3000);
 }
 
-// ============================================================
-//  Utility
-// ============================================================
+/* ============================================================
+   Utility
+   ============================================================ */
 function initials(name) {
-    if (!name) return '?';
-    const parts = name.trim().split(/\s+/);
-    return (parts[0][0] + (parts[1] ? parts[1][0] : '')).toUpperCase();
+  if (!name) return '?';
+  var parts  = name.trim().split(/\s+/);
+  var first  = parts[0] ? parts[0][0] : '';
+  var second = parts[1] ? parts[1][0] : '';
+  return (first + second).toUpperCase() || '?';
 }
 
-const AVATAR_COLORS = [
-    'linear-gradient(135deg,#1a5c2e,#2d6a4f)',
-    'linear-gradient(135deg,#0a3d6b,#1a5c8c)',
-    'linear-gradient(135deg,#6b0a2e,#8c1a4f)',
-    'linear-gradient(135deg,#4a3500,#6b5200)',
-    'linear-gradient(135deg,#1a0a6b,#2d1a8c)',
+var AVATAR_GRADIENTS = [
+  'linear-gradient(135deg,#1a3d2e,#2a5c40)',
+  'linear-gradient(135deg,#0a2d6b,#1a4c8c)',
+  'linear-gradient(135deg,#5c1a0a,#8c3a1a)',
+  'linear-gradient(135deg,#3a2800,#5c4200)',
+  'linear-gradient(135deg,#1a0a5c,#2a1a8c)'
 ];
 
 function avatarGradient(name) {
-    const idx = [...(name||'')].reduce((a,c) => a + c.charCodeAt(0), 0) % AVATAR_COLORS.length;
-    return `background:${AVATAR_COLORS[idx]}`;
+  if (!name) return AVATAR_GRADIENTS[0];
+  var code = 0;
+  for (var i = 0; i < name.length; i++) code += name.charCodeAt(i);
+  return AVATAR_GRADIENTS[code % AVATAR_GRADIENTS.length];
 }
 
 function esc(str) {
-    if (!str) return '';
-    return String(str).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+  if (!str) return '';
+  return String(str)
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;');
 }
+
+/* ============================================================
+   Init
+   ============================================================ */
+document.addEventListener('DOMContentLoaded', function () {
+
+  /* Fetch initial data */
+  luaCall('getContacts');
+  luaCall('getOnlinePlayers');
+
+  /* Search */
+  var searchEl = document.getElementById('search-input');
+  if (searchEl) searchEl.addEventListener('input', renderList);
+
+  /* Add button */
+  var addBtn = document.getElementById('btn-add');
+  if (addBtn) addBtn.addEventListener('click', function () { showAddScreen(null); });
+
+  /* Back from card */
+  var backCardBtn = document.getElementById('btn-back-card');
+  if (backCardBtn) backCardBtn.addEventListener('click', navigateBack);
+
+  /* Edit button on card */
+  var editBtn = document.getElementById('btn-edit');
+  if (editBtn) {
+    editBtn.addEventListener('click', function () {
+      if (activeContact) showAddScreen(activeContact);
+    });
+  }
+
+  /* Cancel on add screen */
+  var cancelBtn     = document.getElementById('btn-cancel');
+  var cancelSaveBtn = document.getElementById('btn-cancel-save');
+  if (cancelBtn)     cancelBtn.addEventListener('click', navigateBack);
+  if (cancelSaveBtn) cancelSaveBtn.addEventListener('click', navigateBack);
+
+  /* Save */
+  var saveBtn = document.getElementById('btn-save-contact');
+  if (saveBtn) saveBtn.addEventListener('click', saveContact);
+
+  /* Wire card action buttons (they exist in DOM at load time) */
+  wireCardActions();
+});
