@@ -1,29 +1,35 @@
 /* ============================================================
-   messages.css — stili specifici app Messaggi
+   messages.css — stili app Messaggi
    ============================================================ */
 
 body {
     background: var(--bg);
     height: 100vh;
-    display: flex;
-    flex-direction: column;
     overflow: hidden;
+    position: relative;
+    font-family: var(--font);
 }
 
 /* ============================================================
-   Gestione schermate con slide
+   Schermate con slide
    ============================================================ */
 .screen {
     position: absolute;
-    inset: 0;
+    top: 0; left: 0; right: 0; bottom: 0;
+    background: var(--bg);
     display: flex;
     flex-direction: column;
-    background: var(--bg);
-    transition: transform 0.28s cubic-bezier(0.4,0,0.2,1), opacity 0.22s ease;
+    transform: translateX(100%);
+    transition: transform var(--slide);
+    will-change: transform;
+    overflow: hidden;
 }
 
-.screen.active { transform: translateX(0); opacity: 1; z-index: 2; }
-.screen:not(.active) { transform: translateX(100%); opacity: 0; z-index: 1; pointer-events: none; }
+.screen.active { transform: translateX(0); }
+.screen.prev   { transform: translateX(-30%); }
+
+/* Prima schermata parte visibile */
+#screen-list { transform: translateX(0); }
 
 /* ============================================================
    Lista conversazioni
@@ -31,26 +37,25 @@ body {
 #conv-list {
     flex: 1;
     overflow-y: auto;
+    display: flex;
+    flex-direction: column;
 }
 
 .conv-item {
     display: flex;
     align-items: center;
-    gap: 12px;
-    padding: 10px 16px;
+    gap: 10px;
+    padding: 9px 14px;
+    min-height: 48px;
+    border-bottom: 0.5px solid rgba(255,255,255,0.07);
     cursor: pointer;
-    border-bottom: 1px solid var(--border);
     transition: background var(--transition);
-    -webkit-user-select: none;
-    user-select: none;
+    flex-shrink: 0;
 }
 
-.conv-item:active { background: var(--surface-hover); }
+.conv-item:active { background: rgba(255,255,255,0.04); }
 
-.conv-meta {
-    flex: 1;
-    min-width: 0;
-}
+.conv-meta { flex: 1; min-width: 0; }
 
 .conv-meta-top {
     display: flex;
@@ -60,8 +65,8 @@ body {
 }
 
 .conv-name {
-    font-size: 15px;
-    font-weight: 600;
+    font-size: 13px;
+    font-weight: 500;
     color: var(--text);
     overflow: hidden;
     text-overflow: ellipsis;
@@ -69,14 +74,14 @@ body {
 }
 
 .conv-time {
-    font-size: 12px;
-    color: var(--text-muted);
+    font-size: 10px;
+    color: var(--text-subtle);
     flex-shrink: 0;
     margin-left: 8px;
 }
 
 .conv-preview {
-    font-size: 13px;
+    font-size: 11px;
     color: var(--text-muted);
     overflow: hidden;
     text-overflow: ellipsis;
@@ -84,148 +89,130 @@ body {
 }
 
 /* ============================================================
-   Chat header
+   Chat navbar
    ============================================================ */
-.chat-header-center {
+.chat-nav-center {
     display: flex;
     flex-direction: column;
     align-items: center;
+    flex: 1;
 }
 
-.chat-contact-name {
-    font-size: 16px;
+.chat-nav-name {
+    font-size: 14px;
     font-weight: 600;
     color: var(--text);
 }
 
-.chat-contact-status {
-    font-size: 11px;
+.chat-nav-status {
+    font-size: 10px;
     color: var(--green);
+    min-height: 13px;
 }
 
 /* ============================================================
-   Contenitore messaggi
+   Area messaggi
    ============================================================ */
-#messages-container {
+#messages-area {
     flex: 1;
     overflow-y: auto;
-    padding: 8px 0 12px;
+    padding: 8px 13px 4px;
     display: flex;
     flex-direction: column;
-    gap: 2px;
-    scroll-behavior: smooth;
+    gap: 3px;
 }
 
 /* Divisore data */
 .date-divider {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    padding: 12px 16px 4px;
-    color: var(--text-muted);
-    font-size: 11px;
-    font-weight: 500;
-    text-transform: uppercase;
-    letter-spacing: 0.5px;
-}
-
-.date-divider::before, .date-divider::after {
-    content: '';
-    flex: 1;
-    height: 1px;
-    background: var(--border);
+    text-align: center;
+    font-size: 10px;
+    color: var(--text-subtle);
+    padding: 8px 0 4px;
+    flex-shrink: 0;
 }
 
 /* ============================================================
    Bubble messaggi
    ============================================================ */
-.msg-row {
-    display: flex;
-    padding: 1px 12px;
-}
-
-.msg-row.outgoing { justify-content: flex-end; }
-.msg-row.incoming { justify-content: flex-start; }
+.msg-row { display: flex; flex-direction: column; }
+.msg-row.out { align-items: flex-end; }
+.msg-row.in  { align-items: flex-start; }
 
 .msg-bubble {
-    max-width: 72%;
-    padding: 8px 12px;
+    max-width: 78%;
+    padding: 7px 11px;
     border-radius: 16px;
-    position: relative;
+    font-size: 12px;
+    line-height: 1.45;
+    color: var(--text);
     word-break: break-word;
 }
 
-.msg-row.outgoing .msg-bubble {
+.msg-row.out .msg-bubble {
     background: var(--bubble-out);
+    border: 0.5px solid var(--bubble-out-border);
     border-bottom-right-radius: 4px;
-    color: var(--text);
 }
 
-.msg-row.incoming .msg-bubble {
+.msg-row.in .msg-bubble {
     background: var(--bubble-in);
+    border: 0.5px solid var(--bubble-in-border);
     border-bottom-left-radius: 4px;
-    color: var(--text);
 }
 
-.msg-text {
-    font-size: 14px;
-    line-height: 1.45;
-}
-
-.msg-time {
-    font-size: 10px;
-    color: var(--text-muted);
-    margin-top: 3px;
-    text-align: right;
+.msg-ts {
+    font-size: 9px;
+    color: var(--text-subtle);
+    margin-top: 2px;
+    padding: 0 2px;
 }
 
 /* ============================================================
    Bubble immagine
    ============================================================ */
-.msg-image-placeholder {
-    width: 180px;
-    height: 120px;
-    background: rgba(255,255,255,0.06);
+.msg-image {
+    width: 150px;
+    height: 96px;
     border-radius: 10px;
+    background: rgba(255,255,255,0.05);
+    border: 0.5px solid var(--border);
     display: flex;
     flex-direction: column;
     align-items: center;
     justify-content: center;
-    gap: 8px;
-    color: var(--text-muted);
-    font-size: 12px;
+    gap: 6px;
+    color: var(--text-subtle);
+    font-size: 11px;
+    padding: 0;
 }
 
 /* ============================================================
    Bubble posizione — mini mappa
    ============================================================ */
 .msg-location {
-    width: 200px;
+    width: 168px;
     cursor: pointer;
-    transition: opacity var(--transition);
 }
-
-.msg-location:active { opacity: 0.8; }
 
 .location-map {
     width: 100%;
-    height: 110px;
-    background: #1a2a1a;
+    height: 76px;
     border-radius: 10px;
+    background: #141f14;
     position: relative;
     overflow: hidden;
-    border: 1px solid rgba(255,255,255,0.08);
+    border: 0.5px solid rgba(255,255,255,0.07);
 }
 
-/* Griglia strade sfondo */
+/* Griglia sfondo */
 .location-map::before {
     content: '';
     position: absolute;
     inset: 0;
     background-image:
-        linear-gradient(rgba(255,255,255,0.04) 1px, transparent 1px),
-        linear-gradient(90deg, rgba(255,255,255,0.04) 1px, transparent 1px);
-    background-size: 20px 20px;
+        linear-gradient(rgba(255,255,255,0.03) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(255,255,255,0.03) 1px, transparent 1px);
+    background-size: 18px 18px;
 }
 
 /* Strade principali */
@@ -234,10 +221,10 @@ body {
     position: absolute;
     inset: 0;
     background-image:
-        linear-gradient(rgba(255,255,255,0.08) 2px, transparent 2px),
-        linear-gradient(90deg, rgba(255,255,255,0.08) 2px, transparent 2px);
-    background-size: 60px 60px;
-    background-position: 15px 15px;
+        linear-gradient(rgba(255,255,255,0.07) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(255,255,255,0.07) 1px, transparent 1px);
+    background-size: 54px 54px;
+    background-position: 12px 12px;
 }
 
 .location-pin {
@@ -249,57 +236,74 @@ body {
 }
 
 .location-label {
-    font-size: 11px;
+    font-size: 10px;
     color: var(--text-muted);
     margin-top: 4px;
-    text-align: center;
+    padding: 0 2px;
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
 }
 
 /* ============================================================
-   Input bar
+   Input bar — bottom della schermata chat
    ============================================================ */
 .input-bar {
     display: flex;
-    align-items: flex-end;
-    gap: 8px;
-    padding: 8px 12px 12px;
-    background: rgba(12,12,12,0.95);
-    border-top: 1px solid var(--border);
-    position: relative;
+    align-items: center;
+    gap: 7px;
+    padding: 7px 12px 10px;
+    border-top: 0.5px solid rgba(255,255,255,0.07);
+    background: var(--bg);
     flex-shrink: 0;
+    position: relative;
 }
 
 .msg-input {
     flex: 1;
-    background: var(--surface);
-    border: 1px solid var(--border);
-    border-radius: 20px;
-    padding: 8px 14px;
+    background: rgba(255,255,255,0.06);
+    border: 0.5px solid rgba(255,255,255,0.07);
+    border-radius: 16px;
+    padding: 6px 12px;
     color: var(--text);
     font-family: var(--font);
-    font-size: 14px;
+    font-size: 13px;
     outline: none;
-    max-height: 100px;
+    max-height: 90px;
     overflow-y: auto;
     line-height: 1.4;
     word-break: break-word;
-    transition: border-color var(--transition);
+    min-height: 30px;
 }
 
-.msg-input:focus { border-color: rgba(255,255,255,0.15); }
 .msg-input:empty::before {
-    content: attr(placeholder);
+    content: attr(data-placeholder);
     color: var(--text-muted);
     pointer-events: none;
 }
 
-.input-attach-btn, .send-btn {
-    width: 34px;
-    height: 34px;
+.input-circle-btn {
+    width: 29px;
+    height: 29px;
     border-radius: 50%;
+    background: rgba(255,255,255,0.06);
+    border: 0.5px solid rgba(255,255,255,0.07);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    color: var(--text-muted);
+    transition: opacity var(--transition);
+    flex-shrink: 0;
+}
+
+.input-circle-btn:active { opacity: 0.6; }
+
+.send-btn {
+    width: 29px;
+    height: 29px;
+    border-radius: 50%;
+    background: var(--green);
     border: none;
     display: flex;
     align-items: center;
@@ -309,56 +313,56 @@ body {
     flex-shrink: 0;
 }
 
-.input-attach-btn:active, .send-btn:active {
-    opacity: 0.7;
-    transform: scale(0.93);
-}
-
-.input-attach-btn {
-    background: var(--surface);
-    color: var(--text-muted);
-}
-
-.send-btn {
-    background: var(--green);
-    color: #fff;
-}
+.send-btn:active { opacity: 0.8; transform: scale(0.93); }
 
 /* ============================================================
    Menu allegati
    ============================================================ */
 .attach-menu {
     position: absolute;
-    bottom: 60px;
+    bottom: 52px;
     left: 12px;
-    background: rgba(28,28,28,0.98);
-    border: 1px solid var(--border);
-    border-radius: var(--radius);
-    padding: 6px 0;
+    background: #1a1a1a;
+    border: 0.5px solid #2a2a2a;
+    border-radius: 14px;
+    overflow: hidden;
     display: none;
     flex-direction: column;
-    min-width: 150px;
-    box-shadow: 0 8px 30px rgba(0,0,0,0.5);
+    min-width: 160px;
+    box-shadow: 0 8px 30px rgba(0,0,0,0.55);
     z-index: 20;
-    backdrop-filter: blur(20px);
+    transform-origin: bottom left;
+    transform: scale(0.9);
+    opacity: 0;
+    transition: transform 0.15s ease, opacity 0.15s ease;
 }
 
-.attach-menu.open { display: flex; }
+.attach-menu.open {
+    display: flex;
+    transform: scale(1);
+    opacity: 1;
+}
 
 .attach-option {
     display: flex;
     align-items: center;
     gap: 10px;
-    padding: 10px 16px;
+    padding: 0 14px;
+    height: 42px;
     background: none;
     border: none;
     color: var(--text);
     font-family: var(--font);
-    font-size: 14px;
+    font-size: 13px;
     cursor: pointer;
     text-align: left;
     transition: background var(--transition);
 }
 
-.attach-option:hover { background: var(--surface); }
-.attach-option:active { background: var(--surface-hover); }
+.attach-option:active { background: rgba(255,255,255,0.06); }
+
+.attach-sep {
+    height: 0.5px;
+    background: rgba(255,255,255,0.07);
+    margin: 0 14px;
+}

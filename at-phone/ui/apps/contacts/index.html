@@ -1,100 +1,226 @@
 <!DOCTYPE html>
 <html lang="it">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Contatti</title>
-<link rel="stylesheet" href="../../style.css">
-<link rel="stylesheet" href="contacts.css">
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Contatti</title>
+  <link rel="stylesheet" href="../../style.css" />
+  <link rel="stylesheet" href="contacts.css" />
 </head>
 <body>
 
-<!-- ============================================================
-     SCHERMATA 1 — Lista contatti
-     ============================================================ -->
-<div id="screen-list" class="screen active">
-  <div class="app-navbar">
-    <span style="min-width:60px"></span>
-    <span class="app-navbar-title">Contatti</span>
-    <button class="nav-btn right" id="btn-add-contact">
-      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-        <line x1="12" y1="5" x2="12" y2="19"/>
-        <line x1="5" y1="12" x2="19" y2="12"/>
+  <!-- =========================================================
+       SCREEN 1 — Contact list (active by default)
+       ========================================================= -->
+  <div id="screen-list" class="screen active">
+
+    <nav class="app-navbar">
+      <span class="navbar-spacer"></span>
+      <span class="navbar-title">Contatti</span>
+      <button class="nav-btn navbar-action" id="btn-add" aria-label="Aggiungi contatto">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none"
+             stroke="var(--blue)" stroke-width="1.5"
+             stroke-linecap="round" stroke-linejoin="round">
+          <line x1="12" y1="5" x2="12" y2="19"></line>
+          <line x1="5" y1="12" x2="19" y2="12"></line>
+        </svg>
+      </button>
+    </nav>
+
+    <div class="search-bar">
+      <svg width="15" height="15" viewBox="0 0 24 24" fill="none"
+           stroke="var(--text-muted)" stroke-width="1.5"
+           stroke-linecap="round" stroke-linejoin="round">
+        <circle cx="11" cy="11" r="8"></circle>
+        <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
       </svg>
-    </button>
-  </div>
-
-  <div class="search-bar">
-    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--text-muted)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-      <circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>
-    </svg>
-    <input type="text" id="search-input" placeholder="Cerca…">
-  </div>
-
-  <div id="contacts-list" style="flex:1;overflow-y:auto;">
-    <!-- Popolato via JS -->
-  </div>
-</div>
-
-<!-- ============================================================
-     SCHERMATA 2 — Scheda contatto
-     ============================================================ -->
-<div id="screen-card" class="screen">
-  <div class="app-navbar">
-    <button class="nav-btn" id="btn-back-card">
-      <svg width="10" height="16" viewBox="0 0 10 16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-        <polyline points="8 2 2 8 8 14"/>
-      </svg>
-      Indietro
-    </button>
-    <span class="app-navbar-title">Contatto</span>
-    <button class="nav-btn right" id="btn-edit-contact" style="color:var(--blue)">Modifica</button>
-  </div>
-
-  <div id="contact-card-content" style="flex:1;overflow-y:auto;"></div>
-</div>
-
-<!-- ============================================================
-     SCHERMATA 3 — Aggiungi / Modifica contatto
-     ============================================================ -->
-<div id="screen-add" class="screen">
-  <div class="app-navbar">
-    <button class="nav-btn" id="btn-cancel-add">Annulla</button>
-    <span class="app-navbar-title" id="add-title">Nuovo contatto</span>
-    <span style="min-width:60px"></span>
-  </div>
-
-  <div style="flex:1;overflow-y:auto;padding:20px 16px;">
-    <!-- Avatar placeholder -->
-    <div class="new-contact-avatar">
-      <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="var(--text-muted)" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
-        <path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/>
-        <circle cx="12" cy="7" r="4"/>
-      </svg>
+      <input type="text" id="search-input" placeholder="Cerca contatti" />
     </div>
 
-    <div class="form-field">
-      <label class="form-label">Nome *</label>
-      <input type="text" class="form-input" id="field-name" placeholder="Mario">
-    </div>
-    <div class="form-field">
-      <label class="form-label">Cognome (opzionale)</label>
-      <input type="text" class="form-input" id="field-lastname" placeholder="Rossi">
-    </div>
-    <div class="form-field">
-      <label class="form-label">Numero *</label>
-      <input type="text" class="form-input" id="field-number" placeholder="555-0000" id="field-number">
-    </div>
-    <div class="form-field">
-      <label class="form-label">Note (opzionale)</label>
-      <textarea class="form-input" id="field-notes" placeholder="Aggiungi nota…"></textarea>
-    </div>
+    <div id="contacts-list" style="flex:1;overflow-y:auto;"></div>
 
-    <button class="btn btn-green btn-full" id="btn-save-contact" style="margin-top:8px">Salva contatto</button>
-    <button class="btn btn-ghost btn-full" id="btn-cancel-add2" style="margin-top:8px">Annulla</button>
   </div>
-</div>
 
-<script src="contacts.js"></script>
+
+  <!-- =========================================================
+       SCREEN 2 — Contact card
+       ========================================================= -->
+  <div id="screen-card" class="screen">
+
+    <nav class="app-navbar">
+      <button class="nav-btn" id="btn-back-card" aria-label="Indietro">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none"
+             stroke="rgba(255,255,255,0.88)" stroke-width="1.5"
+             stroke-linecap="round" stroke-linejoin="round">
+          <polyline points="15 18 9 12 15 6"></polyline>
+        </svg>
+      </button>
+      <span class="navbar-title">Contatto</span>
+      <button class="nav-btn navbar-action" id="btn-edit" aria-label="Modifica">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none"
+             stroke="var(--blue)" stroke-width="1.5"
+             stroke-linecap="round" stroke-linejoin="round">
+          <path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"></path>
+          <path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"></path>
+        </svg>
+      </button>
+    </nav>
+
+    <div id="card-scroll" style="flex:1;overflow-y:auto;">
+
+      <!-- Hero -->
+      <div class="card-hero">
+        <div class="card-hero-avatar-wrap">
+          <div class="avatar" id="card-avatar" style="width:64px;height:64px;font-size:22px;font-weight:600;"></div>
+          <div class="avatar-dot card-avatar-dot" id="card-online-dot"></div>
+        </div>
+        <span class="card-name" id="card-name"></span>
+        <span class="card-number" id="card-number"></span>
+        <span class="card-status" id="card-status"></span>
+      </div>
+
+      <!-- Quick actions -->
+      <div class="quick-actions">
+        <div class="quick-action-wrap">
+          <button class="quick-action-circle" id="qa-call" aria-label="Chiama">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none"
+                 stroke="var(--green)" stroke-width="1.5"
+                 stroke-linecap="round" stroke-linejoin="round">
+              <path d="M22 16.92v3a2 2 0 01-2.18 2
+                       19.79 19.79 0 01-8.63-3.07
+                       A19.5 19.5 0 013.09 9.81
+                       a19.79 19.79 0 01-3.07-8.67
+                       A2 2 0 012 .99h3a2 2 0 012 1.72
+                       c.127.96.361 1.903.7 2.81
+                       a2 2 0 01-.45 2.11L6.09 8.91
+                       a16 16 0 006 6l1.27-1.27
+                       a2 2 0 012.11-.45
+                       c.907.339 1.85.573 2.81.7
+                       A2 2 0 0122 16.92z"></path>
+            </svg>
+          </button>
+          <span class="quick-action-label">Chiama</span>
+        </div>
+
+        <div class="quick-action-wrap">
+          <button class="quick-action-circle" id="qa-msg" aria-label="Messaggio">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none"
+                 stroke="var(--text)" stroke-width="1.5"
+                 stroke-linecap="round" stroke-linejoin="round">
+              <path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"></path>
+            </svg>
+          </button>
+          <span class="quick-action-label">Messaggio</span>
+        </div>
+
+        <div class="quick-action-wrap">
+          <button class="quick-action-circle" id="qa-pos" aria-label="Posizione">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none"
+                 stroke="var(--blue)" stroke-width="1.5"
+                 stroke-linecap="round" stroke-linejoin="round">
+              <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0118 0z"></path>
+              <circle cx="12" cy="10" r="3"></circle>
+            </svg>
+          </button>
+          <span class="quick-action-label">Posizione</span>
+        </div>
+      </div>
+
+      <!-- Info card -->
+      <div class="info-card" style="margin:0 14px 12px;">
+        <div class="info-row">
+          <span class="info-label">Telefono</span>
+          <span class="info-value" id="info-phone"></span>
+        </div>
+        <div class="info-row" id="info-status-row">
+          <span class="info-label">Stato</span>
+          <span class="info-value" id="info-status-val"></span>
+        </div>
+        <div class="info-row">
+          <span class="info-label">Aggiunto il</span>
+          <span class="info-value" id="info-added"></span>
+        </div>
+      </div>
+
+      <!-- Danger card -->
+      <div class="info-card" style="margin:0 14px 24px;">
+        <div class="danger-row" id="btn-delete">Elimina contatto</div>
+        <div class="danger-row" id="btn-block">Blocca numero</div>
+      </div>
+
+    </div>
+
+  </div>
+
+
+  <!-- =========================================================
+       SCREEN 3 — Add / Edit contact
+       ========================================================= -->
+  <div id="screen-add" class="screen">
+
+    <nav class="app-navbar">
+      <button class="nav-btn" id="btn-cancel" aria-label="Annulla">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none"
+             stroke="rgba(255,255,255,0.88)" stroke-width="1.5"
+             stroke-linecap="round" stroke-linejoin="round">
+          <polyline points="15 18 9 12 15 6"></polyline>
+        </svg>
+      </button>
+      <span class="navbar-title" id="add-screen-title">Nuovo contatto</span>
+      <span class="navbar-spacer"></span>
+    </nav>
+
+    <div style="flex:1;overflow-y:auto;padding:16px;">
+
+      <!-- Avatar picker -->
+      <div style="display:flex;flex-direction:column;align-items:center;margin-bottom:20px;">
+        <div class="avatar-picker" id="avatar-picker">
+          <svg width="26" height="26" viewBox="0 0 24 24" fill="none"
+               stroke="rgba(255,255,255,0.18)" stroke-width="1.5"
+               stroke-linecap="round" stroke-linejoin="round">
+            <path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"></path>
+            <circle cx="12" cy="7" r="4"></circle>
+          </svg>
+        </div>
+        <span class="avatar-picker-label">foto</span>
+      </div>
+
+      <!-- Name fields -->
+      <div class="info-card" style="margin-bottom:12px;">
+        <div class="form-row">
+          <label for="field-name">Nome</label>
+          <input type="text" id="field-name" placeholder="Mario" autocomplete="off" />
+        </div>
+        <div class="form-row">
+          <label for="field-lastname">Cognome</label>
+          <input type="text" id="field-lastname" placeholder="Rossi" autocomplete="off" />
+        </div>
+      </div>
+
+      <!-- Number field -->
+      <div class="info-card" style="margin-bottom:12px;">
+        <div class="form-row">
+          <label for="field-number">Numero</label>
+          <input type="text" id="field-number" placeholder="555-0000" autocomplete="off" inputmode="tel" />
+        </div>
+      </div>
+
+      <!-- Notes field -->
+      <div class="info-card" style="margin-bottom:16px;">
+        <div class="form-row" style="height:auto;align-items:flex-start;padding-top:10px;padding-bottom:10px;">
+          <label for="field-notes" style="padding-top:1px;">Note</label>
+          <textarea id="field-notes" placeholder="Aggiungi una nota"></textarea>
+        </div>
+      </div>
+
+      <button class="btn-primary" id="btn-save-contact" style="margin-bottom:10px;">Salva contatto</button>
+      <button class="btn-secondary" id="btn-cancel-save">Annulla</button>
+
+    </div>
+
+  </div>
+
+
+  <script src="contacts.js"></script>
 </body>
 </html>

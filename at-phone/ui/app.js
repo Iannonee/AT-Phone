@@ -1,31 +1,23 @@
 /* ============================================================
-   at-phone — app.js
-   Logica home screen: orologio, navigazione app, NUI bridge.
+   app.js — home screen logic, iframe manager, NUI bridge
    ============================================================ */
-
 'use strict';
 
-// ============================================================
-//  Stato globale
-// ============================================================
-let phoneOpen     = false;
-let myNumber      = null;
-let activeApp     = null;
-let activeCallId  = null;
+// ── Stato ────────────────────────────────────────────────────
+let phoneOpen  = false;
+let myNumber   = null;
+let activeApp  = null;
+let activeCallId = null;
 let callTimerInterval = null;
-let callSeconds   = 0;
-let badges        = { messages: 0, calls: 0 };
-let notifQueue    = [];
+let callSeconds = 0;
+let badges = { messages: 0, calls: 0 };
 
-// ============================================================
-//  Orologio & data
-// ============================================================
-const DAYS_IT = ['Domenica','Lunedì','Martedì','Mercoledì','Giovedì','Venerdì','Sabato'];
+const DAYS_IT = ['Domenica','Lunedi','Martedi','Mercoledi','Giovedi','Venerdi','Sabato'];
 
+// ── Orologio ─────────────────────────────────────────────────
 function updateClock() {
     const now = new Date();
-    const h = String(now.getHours()).padStart(2,'0');
-    const m = String(now.getMinutes()).padStart(2,'0');
+    const h = pad(now.getHours()), m = pad(now.getMinutes());
     document.getElementById('clock').textContent = `${h}:${m}`;
     document.getElementById('day-name').textContent = DAYS_IT[now.getDay()];
     document.getElementById('day-number').textContent = now.getDate();
@@ -33,9 +25,7 @@ function updateClock() {
 updateClock();
 setInterval(updateClock, 10000);
 
-// ============================================================
-//  Apertura / chiusura telefono
-// ============================================================
+// ── Telefono apri/chiudi ──────────────────────────────────────
 function openPhone() {
     phoneOpen = true;
     document.getElementById('phone-wrapper').classList.add('open');
@@ -48,13 +38,10 @@ function closePhone() {
     nuiCallback('closePhone', {});
 }
 
-// ============================================================
-//  Navigazione app
-// ============================================================
-const appFrameContainer = document.getElementById('app-frame-container');
-const appIframe         = document.getElementById('app-iframe');
-const homeScreen        = document.getElementById('home-screen');
-const statusBar         = document.getElementById('status-bar');
+// ── Navigazione app ───────────────────────────────────────────
+const frameContainer = document.getElementById('app-frame-container');
+const iframe         = document.getElementById('app-iframe');
+const homeScreen     = document.getElementById('home-screen');
 
 const APP_URLS = {
     messages: 'apps/messages/index.html',
@@ -64,84 +51,85 @@ const APP_URLS = {
 
 function openApp(appName) {
     const url = APP_URLS[appName];
-    if (!url) return; // app non ancora implementata
-
+    if (!url) return;
     activeApp = appName;
     homeScreen.style.display = 'none';
-    appFrameContainer.classList.add('visible');
-    appIframe.src = url;
-
-    // Azzera badge quando si apre l'app
-    if (badges[appName]) {
-        badges[appName] = 0;
-        updateBadge(appName);
-    }
+    frameContainer.classList.add('visible');
+    iframe.src = url;
+    if (badges[appName]) { badges[appName] = 0; updateBadge(appName); }
 }
 
 function closeActiveApp() {
     if (!activeApp) return;
     activeApp = null;
-    appIframe.src = 'about:blank';
-    appFrameContainer.classList.remove('visible');
+    iframe.src = 'about:blank';
+    frameContainer.classList.remove('visible');
     homeScreen.style.display = '';
 }
 
-// Click su icone app (griglia + dock)
+// Click icone griglia + dock
 document.querySelectorAll('.app-icon[data-app]').forEach(el => {
-    el.addEventListener('click', () => {
-        const app = el.dataset.app;
-        if (app) openApp(app);
-    });
+    el.addEventListener('click', () => openApp(el.dataset.app));
 });
 
-// ============================================================
-//  Comunicazione con gli iframe delle app
-// ============================================================
-window.addEventListener('message', (event) => {
-    const msg = event.data;
-    if (!msg || typeof msg !== 'object') return;
-
-    switch (msg.type) {
-        case 'closeApp':
-            closeActiveApp();
-            break;
-
-        case 'luaCallback':
-            // L'app iframe chiede di chiamare un NUI callback
-            if (msg.action) {
-                nuiCallback(msg.action, msg.payload || {}).then(res => {
-                    // Ritrasmetti la risposta all'iframe
-                    if (appIframe.contentWindow) {
-                        appIframe.contentWindow.postMessage({
-                            type:     'nuiResponse',
-                            action:   msg.action,
-                            response: res,
-                            reqId:    msg.reqId,
-                        }, '*');
-                    }
-                });
-            }
-            break;
-
-        case 'openApp':
-            // Un'app può chiedere di aprire un'altra app (es. messaggi apre chiamate)
-            if (msg.app) openApp(msg.app);
-            break;
+// Home indicator — chiude l'app attiva o il telefono
+document.getElementById('home-indicator').addEventListener('click', () => {
+    if (activeApp) {
+        closeActiveApp();
+    } else if (phoneOpen) {
+        closePhone();
     }
 });
 
-// Invia dati NUI all'iframe attivo
-function forwardToIframe(data) {
-    if (appIframe && appIframe.contentWindow) {
-        try {
-            appIframe.contentWindow.postMessage(data, '*');
-        } catch(e) {}
+// ESC keyboard
+document.addEventListener('keydown', e => {
+    if (e.key === 'Escape') {
+        if (activeApp) closeActiveApp();
+        else if (phoneOpen) closePhone();
+    }
+});
+
+// ── Comunicazione con iframe ──────────────────────────────────
+window.addEventListener('message', e => {
+    const msg = e.data;
+    if (!msg || typeof msg !== 'object') return;
+
+    // Messaggi dalle app iframe
+    if (e.source !== window) {
+        switch (msg.type) {
+            case 'closeApp':
+                closeActiveApp();
+                break;
+            case 'luaCallback':
+                if (msg.action) {
+                    nuiCallback(msg.action, msg.payload || {}).then(res => {
+                        if (iframe.contentWindow) {
+                            iframe.contentWindow.postMessage({
+                                type: 'nuiResponse', action: msg.action,
+                                response: res, reqId: msg.reqId,
+                            }, '*');
+                        }
+                    });
+                }
+                break;
+            case 'openApp':
+                if (msg.app) openApp(msg.app);
+                break;
+        }
+        return;
+    }
+
+    // Messaggi dal gioco (SendNUIMessage)
+    handleNUI(msg);
+});
+
+function forwardToApp(data) {
+    if (iframe && iframe.contentWindow) {
+        try { iframe.contentWindow.postMessage(data, '*'); } catch(e) {}
     }
 }
 
-// ============================================================
-//  NUI Bridge
-// ============================================================
+// ── NUI callback ─────────────────────────────────────────────
 async function nuiCallback(action, data) {
     try {
         const res = await fetch(`https://at-phone/${action}`, {
@@ -150,28 +138,14 @@ async function nuiCallback(action, data) {
             body:    JSON.stringify(data),
         });
         return await res.json();
-    } catch(e) {
-        return {};
-    }
+    } catch(e) { return {}; }
 }
 
-// ============================================================
-//  Ricezione messaggi dal gioco (SendNUIMessage)
-// ============================================================
-window.addEventListener('message', (event) => {
-    const msg = event.data;
-    if (!msg || typeof msg.type !== 'string') return;
-
-    // Ignora i messaggi che vengono dagli iframe delle app
-    if (event.source !== window) return;
-
-    handleNUIMessage(msg);
-});
-
-function handleNUIMessage(msg) {
+// ── Handler messaggi NUI dal gioco ────────────────────────────
+function handleNUI(msg) {
     switch (msg.type) {
 
-        // ── Stato telefono ───────────────────────────────────
+        // Stato telefono
         case 'phoneStatus':
             myNumber = msg.number;
             break;
@@ -185,51 +159,51 @@ function handleNUIMessage(msg) {
             closePhone();
             break;
 
-        // ── Messaggi ─────────────────────────────────────────
+        // Messaggi
         case 'messageReceived':
             if (activeApp !== 'messages') {
                 badges.messages = (badges.messages || 0) + 1;
                 updateBadge('messages');
-                pushNotification('Messaggi', `Da ${msg.message?.senderNumber}: ${truncate(msg.message?.content, 40)}`);
+                pushNotif('Messaggi', `Da ${msg.message?.senderNumber}: ${truncate(msg.message?.content, 38)}`);
             }
-            forwardToIframe(msg);
+            forwardToApp(msg);
             break;
 
         case 'messageSent':
         case 'conversations':
         case 'messages':
         case 'messageError':
-            forwardToIframe(msg);
+            forwardToApp(msg);
             break;
 
-        // ── Contatti ─────────────────────────────────────────
+        // Contatti
         case 'contacts':
         case 'contactSaved':
         case 'contactDeleted':
         case 'contactUpdated':
         case 'contactError':
         case 'onlinePlayers':
-            forwardToIframe(msg);
+            forwardToApp(msg);
             break;
 
-        // ── Chiamate ─────────────────────────────────────────
+        // Chiamate
         case 'callRinging':
             activeCallId = msg.data?.callId;
             if (activeApp !== 'calls') openApp('calls');
-            forwardToIframe(msg);
+            forwardToApp(msg);
             break;
 
         case 'incomingCall':
             activeCallId = msg.data?.callId;
             if (activeApp !== 'calls') openApp('calls');
-            forwardToIframe(msg);
-            pushNotification('Telefono', `Chiamata da ${msg.data?.callerName || msg.data?.callerNumber}`);
+            forwardToApp(msg);
+            pushNotif('Telefono', `Chiamata da ${msg.data?.callerName || msg.data?.callerNumber}`);
             break;
 
         case 'callConnected':
             activeCallId = msg.data?.callId;
-            startCallTimer(msg.data?.withNumber);
-            forwardToIframe(msg);
+            startCallTimer(msg.data?.withNumber || msg.data?.withName || '');
+            forwardToApp(msg);
             break;
 
         case 'callEnded':
@@ -239,20 +213,18 @@ function handleNUIMessage(msg) {
                 badges.calls = (badges.calls || 0) + 1;
                 updateBadge('calls');
             }
-            forwardToIframe(msg);
+            forwardToApp(msg);
             break;
 
         case 'callFailed':
         case 'callError':
         case 'callLog':
-            forwardToIframe(msg);
+            forwardToApp(msg);
             break;
     }
 }
 
-// ============================================================
-//  Badge
-// ============================================================
+// ── Badge ─────────────────────────────────────────────────────
 function updateBadge(appName) {
     const count = badges[appName] || 0;
     document.querySelectorAll(`[data-app="${appName}"] .app-badge`).forEach(el => {
@@ -261,52 +233,40 @@ function updateBadge(appName) {
     });
 }
 
-// ============================================================
-//  Notifiche Home Screen
-// ============================================================
-function pushNotification(title, body) {
+// ── Notifiche home ────────────────────────────────────────────
+function pushNotif(title, body) {
     const area = document.getElementById('notifications-area');
+    while (area.children.length >= 2) area.removeChild(area.firstChild);
 
-    // Max 2 notifiche visibili
-    while (area.children.length >= 2) {
-        area.removeChild(area.firstChild);
-    }
-
-    const now = new Date();
-    const time = `${String(now.getHours()).padStart(2,'0')}:${String(now.getMinutes()).padStart(2,'0')}`;
+    const now  = new Date();
+    const time = `${pad(now.getHours())}:${pad(now.getMinutes())}`;
 
     const card = document.createElement('div');
     card.className = 'notif-card';
     card.innerHTML = `
         <div class="notif-content">
-            <div class="notif-title">${escapeHtml(title)}</div>
-            <div class="notif-body">${escapeHtml(body)}</div>
+            <div class="notif-title">${esc(title)}</div>
+            <div class="notif-body">${esc(body)}</div>
         </div>
         <span class="notif-time">${time}</span>
     `;
     area.appendChild(card);
 
-    // Rimuovi dopo 6 secondi
     setTimeout(() => {
-        card.style.transition = 'opacity 0.4s, transform 0.4s';
+        card.style.transition = 'opacity 0.35s, transform 0.35s';
         card.style.opacity = '0';
-        card.style.transform = 'translateY(-8px)';
-        setTimeout(() => card.remove(), 400);
+        card.style.transform = 'translateY(-6px)';
+        setTimeout(() => card.remove(), 350);
     }, 6000);
 }
 
-// ============================================================
-//  Dynamic Island — timer chiamata attiva
-// ============================================================
-function startCallTimer(withNumber) {
-    const di       = document.getElementById('dynamic-island');
-    const diInfo   = document.getElementById('di-call-info');
-    const diName   = document.getElementById('di-name');
-    const diTimer  = document.getElementById('di-timer');
-
+// ── Dynamic Island — timer chiamata ───────────────────────────
+function startCallTimer(withName) {
+    const di    = document.getElementById('dynamic-island');
+    const info  = document.getElementById('di-call-info');
     di.classList.add('expanded');
-    diInfo.classList.add('active');
-    diName.textContent = withNumber || 'Chiamata';
+    info.classList.add('active');
+    document.getElementById('di-name').textContent = withName || 'Chiamata';
 
     callSeconds = 0;
     clearInterval(callTimerInterval);
@@ -314,7 +274,7 @@ function startCallTimer(withNumber) {
         callSeconds++;
         const m = Math.floor(callSeconds / 60);
         const s = callSeconds % 60;
-        diTimer.textContent = `${m}:${String(s).padStart(2,'0')}`;
+        document.getElementById('di-timer').textContent = `${m}:${pad(s)}`;
     }, 1000);
 }
 
@@ -322,42 +282,18 @@ function stopCallTimer() {
     clearInterval(callTimerInterval);
     callTimerInterval = null;
     callSeconds = 0;
-
-    const di     = document.getElementById('dynamic-island');
-    const diInfo = document.getElementById('di-call-info');
-
-    di.classList.remove('expanded');
-    diInfo.classList.remove('active');
+    document.getElementById('dynamic-island').classList.remove('expanded');
+    document.getElementById('di-call-info').classList.remove('active');
     document.getElementById('di-timer').textContent = '0:00';
 }
 
-// ============================================================
-//  Utility
-// ============================================================
-function truncate(str, max) {
-    if (!str) return '';
-    return str.length > max ? str.slice(0, max) + '…' : str;
+// ── Utility ───────────────────────────────────────────────────
+function pad(n) { return String(n).padStart(2,'0'); }
+function truncate(s, max) { if (!s) return ''; return s.length > max ? s.slice(0,max)+'…' : s; }
+function esc(s) {
+    if (!s) return '';
+    return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
 }
 
-function escapeHtml(str) {
-    if (!str) return '';
-    return str.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
-}
-
-// ============================================================
-//  Pressione tasto Escape — chiude l'app attiva o il telefono
-// ============================================================
-document.addEventListener('keydown', (e) => {
-    if (e.key === 'Escape') {
-        if (activeApp) {
-            closeActiveApp();
-        } else if (phoneOpen) {
-            closePhone();
-        }
-    }
-});
-
-// ============================================================
-//  Init: richiedi stato telefono al load
-// ============================================================
+// ── Init ─────────────────────────────────────────────────────
 nuiCallback('requestPhone', {});

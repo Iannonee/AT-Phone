@@ -1,314 +1,344 @@
 /* ============================================================
-   calls.css — stili app Telefono
+   calls.css — Telefono app styles
    ============================================================ */
 
 body {
-    background: var(--bg);
-    height: 100vh;
-    display: flex;
-    flex-direction: column;
-    overflow: hidden;
+  background: var(--bg);
+  height: 100vh;
+  overflow: hidden;
+  position: relative;
+  font-family: var(--font);
 }
 
 /* ============================================================
-   Stati (dialpad / chiamata)
+   Call states — only one visible at a time
    ============================================================ */
 .call-state {
-    position: absolute;
-    inset: 0;
-    display: flex;
-    flex-direction: column;
-    background: var(--bg);
-    opacity: 0;
-    pointer-events: none;
-    transition: opacity 0.25s ease;
+  position: absolute;
+  top: 0; left: 0; right: 0; bottom: 0;
+  display: none;
+  flex-direction: column;
+  background: var(--bg);
 }
 
 .call-state.active {
-    opacity: 1;
-    pointer-events: all;
-    z-index: 2;
+  display: flex;
 }
 
 /* ============================================================
-   Tastierino
+   Navbar
    ============================================================ */
-.dialpad-section {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    padding: 4px 20px 8px;
+.navbar-title {
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--text);
+  text-align: center;
+  flex: 1;
 }
 
-.dial-display {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: 12px;
-    min-height: 52px;
-    width: 100%;
-    position: relative;
-    margin-bottom: 8px;
+.navbar-right {
+  min-width: 44px;
 }
 
-#dial-number {
-    font-size: 32px;
-    font-weight: 300;
-    color: var(--text);
-    letter-spacing: 2px;
-    font-variant-numeric: tabular-nums;
+/* ============================================================
+   Number display area
+   ============================================================ */
+.number-display {
+  flex: 1;
+  max-height: 120px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 16px 32px;
+  position: relative;
 }
 
-.backspace-btn {
-    background: none;
-    border: none;
-    color: var(--text-muted);
-    cursor: pointer;
-    padding: 8px;
-    display: flex;
-    align-items: center;
-    transition: opacity var(--transition);
-    position: absolute;
-    right: 0;
+.dial-number-text {
+  font-size: 28px;
+  font-weight: 300;
+  letter-spacing: 2px;
+  color: var(--text);
+  font-variant-numeric: tabular-nums;
 }
 
-.backspace-btn:active { opacity: 0.5; }
+.dial-placeholder {
+  font-size: 15px;
+  color: var(--text-subtle);
+  position: absolute;
+}
 
-.dialpad-grid {
-    display: grid;
-    grid-template-columns: repeat(3, 1fr);
-    gap: 10px;
-    width: 100%;
-    max-width: 260px;
+/* ============================================================
+   Dial grid
+   ============================================================ */
+.dial-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 12px;
+  padding: 0 32px 12px;
 }
 
 .dial-key {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    background: var(--surface);
-    border: 1px solid var(--border);
-    border-radius: 50%;
-    width: 70px;
-    height: 70px;
-    cursor: pointer;
-    font-family: var(--font);
-    margin: 0 auto;
-    transition: background var(--transition), transform var(--transition);
+  width: 58px;
+  height: 58px;
+  border-radius: 50%;
+  background: rgba(255,255,255,0.06);
+  border: 0.5px solid rgba(255,255,255,0.08);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: background 0.15s ease;
+  font-family: var(--font);
+  margin: 0 auto;
 }
 
 .dial-key:active {
-    background: rgba(255,255,255,0.14);
-    transform: scale(0.92);
+  background: rgba(255,255,255,0.12);
 }
 
-.dial-key .digit {
-    font-size: 26px;
-    font-weight: 300;
-    color: var(--text);
-    line-height: 1;
+.dial-digit {
+  font-size: 22px;
+  font-weight: 300;
+  color: var(--text);
+  line-height: 1;
 }
 
-.dial-key .sub {
-    font-size: 9px;
-    font-weight: 600;
-    color: var(--text-muted);
-    letter-spacing: 1px;
-    margin-top: 1px;
-}
-
-.dial-actions {
-    display: flex;
-    justify-content: center;
-    margin-top: 12px;
+.dial-sub {
+  font-size: 8px;
+  color: rgba(255,255,255,0.3);
+  letter-spacing: 1px;
+  margin-top: 1px;
+  line-height: 1;
 }
 
 /* ============================================================
-   Pulsanti chiamata
+   Action row (dial / backspace)
    ============================================================ */
-.call-btn {
-    width: 70px;
-    height: 70px;
-    border-radius: 50%;
-    border: none;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    cursor: pointer;
-    transition: opacity var(--transition), transform var(--transition);
-    flex-shrink: 0;
+.action-row {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 12px;
+  padding: 0 32px 16px;
+  align-items: center;
 }
 
-.call-btn:active { opacity: 0.75; transform: scale(0.93); }
-.call-btn.green  { background: var(--green); }
-.call-btn.red    { background: var(--red);   }
-
-/* Animazione ring sul tasto rispondi */
-@keyframes ring {
-    0%  { box-shadow: 0 0 0 0   rgba(52,199,89,0.6); }
-    70% { box-shadow: 0 0 0 16px rgba(52,199,89,0);   }
-    100%{ box-shadow: 0 0 0 0   rgba(52,199,89,0);    }
+.action-placeholder {
+  width: 58px;
+  height: 58px;
+  margin: 0 auto;
 }
-
-.ring-btn { animation: ring 1.4s infinite; }
-
-@keyframes ringAvatar {
-    0%  { box-shadow: 0 0 0 0   rgba(52,199,89,0.4); }
-    70% { box-shadow: 0 0 0 20px rgba(52,199,89,0);   }
-    100%{ box-shadow: 0 0 0 0   rgba(52,199,89,0);    }
-}
-
-.ring-pulse { animation: ringAvatar 1.4s infinite; }
 
 /* ============================================================
-   Schermata chiamata
+   Action circles
    ============================================================ */
-.call-screen {
-    flex: 1;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: space-between;
-    padding: 20px 20px 40px;
+.action-circle {
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  border: none;
+  transition: opacity 0.15s ease;
+  flex-shrink: 0;
 }
 
-.call-contact-info {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    gap: 12px;
-    padding-top: 24px;
+.action-circle:active {
+  opacity: 0.7;
 }
 
+/* Dial call button */
+.dial-call-btn {
+  width: 58px;
+  height: 58px;
+  background: var(--green);
+  margin: 0 auto;
+}
+
+/* Backspace button */
+.backspace-btn {
+  width: 58px;
+  height: 58px;
+  background: rgba(255,255,255,0.06);
+  border: 0.5px solid rgba(255,255,255,0.08) !important;
+  margin: 0 auto;
+}
+
+/* Mute / Speaker circles (54px soft) */
+.mute-circle,
+.speaker-circle {
+  width: 54px;
+  height: 54px;
+  background: rgba(255,255,255,0.1);
+}
+
+.mute-circle.active,
+.speaker-circle.active {
+  background: rgba(255,255,255,0.22);
+}
+
+/* Hangup circle (64px red) */
+.hangup-circle {
+  width: 64px;
+  height: 64px;
+  background: var(--red);
+}
+
+/* Answer circle (64px green) */
+.answer-circle {
+  width: 64px;
+  height: 64px;
+  background: var(--green);
+}
+
+/* ============================================================
+   Action wrap — icon + label column
+   ============================================================ */
+.action-wrap {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+}
+
+.action-label {
+  font-size: 10px;
+  color: var(--text-muted);
+  font-family: var(--font);
+}
+
+/* ============================================================
+   Call screen layout
+   ============================================================ */
+.call-navbar-spacer {
+  height: 60px;
+  flex-shrink: 0;
+}
+
+.call-center {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+}
+
+.call-actions {
+  flex-shrink: 0;
+  padding: 0 32px 48px;
+  display: flex;
+  justify-content: center;
+  align-items: flex-start;
+  gap: 32px;
+}
+
+/* ============================================================
+   Call screen text elements
+   ============================================================ */
 .call-name {
-    font-size: 26px;
-    font-weight: 700;
-    color: var(--text);
-    text-align: center;
+  font-size: 20px;
+  font-weight: 600;
+  color: var(--text);
+  text-align: center;
 }
 
 .call-status {
-    font-size: 14px;
-    color: var(--text-muted);
+  font-size: 13px;
+  color: rgba(255,255,255,0.4);
 }
 
 .call-timer {
-    font-size: 18px;
-    color: var(--green);
-    font-variant-numeric: tabular-nums;
-    letter-spacing: 0.5px;
+  font-size: 18px;
+  color: var(--green);
+  font-variant-numeric: tabular-nums;
+  letter-spacing: 0.5px;
 }
 
-/* Dots animati "in corso..." */
-.outgoing-dots .dot {
-    animation: blink 1.4s infinite;
-}
-.outgoing-dots .dot:nth-child(2) { animation-delay: 0.2s; }
-.outgoing-dots .dot:nth-child(3) { animation-delay: 0.4s; }
-
-@keyframes blink {
-    0%, 80%, 100% { opacity: 0; }
-    40% { opacity: 1; }
+.incoming-label {
+  font-size: 11px;
+  color: rgba(255,255,255,0.4);
 }
 
 /* ============================================================
-   Azioni chiamata
+   Animations
    ============================================================ */
-.call-actions {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: 28px;
+@keyframes pulse {
+  0%   { box-shadow: 0 0 0 0   rgba(52,199,89,0.4); }
+  70%  { box-shadow: 0 0 0 16px rgba(52,199,89,0);   }
+  100% { box-shadow: 0 0 0 0   rgba(52,199,89,0);   }
 }
 
-.incoming-actions {
-    gap: 48px;
+.ring-pulse {
+  animation: pulse 1.5s infinite;
 }
 
-.call-action-wrap {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    gap: 8px;
+@keyframes ellipsis {
+  0%,20%   { content: ''; }
+  40%      { content: '.'; }
+  60%      { content: '..'; }
+  80%,100% { content: '...'; }
 }
 
-.call-btn-label {
-    font-size: 12px;
-    color: var(--text-muted);
-    font-family: var(--font);
-}
-
-.call-action-btn {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    gap: 6px;
-    background: var(--surface);
-    border: 1px solid var(--border);
-    border-radius: 16px;
-    width: 64px;
-    height: 64px;
-    cursor: pointer;
-    color: var(--text);
-    font-family: var(--font);
-    font-size: 11px;
-    transition: background var(--transition), opacity var(--transition);
-}
-
-.call-action-btn:active { opacity: 0.7; }
-.call-action-btn.active { background: rgba(255,255,255,0.15); color: var(--amber); }
-
-.call-action-btn span {
-    font-size: 11px;
-    color: var(--text-muted);
-    line-height: 1;
+.dots::after {
+  content: '';
+  animation: ellipsis 1.5s infinite;
 }
 
 /* ============================================================
-   Recenti
+   Recent calls
    ============================================================ */
-.recents-section {
-    flex: 1;
-    overflow-y: auto;
-    border-top: 1px solid var(--border);
+.recent-calls-container {
+  flex: 1;
+  overflow-y: auto;
+  border-top: 0.5px solid var(--border);
+  display: flex;
+  flex-direction: column;
 }
 
 .recent-item {
-    display: flex;
-    align-items: center;
-    gap: 12px;
-    padding: 10px 16px;
-    border-bottom: 1px solid var(--border);
-    cursor: pointer;
-    transition: background var(--transition);
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 9px 14px;
+  border-bottom: 0.5px solid var(--border);
+  cursor: pointer;
+  transition: background 0.15s ease;
 }
 
-.recent-item:active { background: var(--surface-hover); }
-
-.recent-info { flex: 1; min-width: 0; }
+.recent-item:active {
+  background: rgba(255,255,255,0.04);
+}
 
 .recent-name {
-    font-size: 14px;
-    font-weight: 500;
-    color: var(--text);
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--text);
 }
 
 .recent-detail {
-    font-size: 12px;
-    color: var(--text-muted);
-    display: flex;
-    align-items: center;
-    gap: 4px;
+  font-size: 11px;
+  color: var(--text-muted);
+  margin-top: 1px;
+}
+
+.recent-info {
+  flex: 1;
+  min-width: 0;
 }
 
 .recent-time {
-    font-size: 12px;
-    color: var(--text-muted);
-    flex-shrink: 0;
+  font-size: 11px;
+  color: var(--text-muted);
+  flex-shrink: 0;
 }
 
-.direction-icon { flex-shrink: 0; }
+/* ============================================================
+   Avatar sizes
+   ============================================================ */
+.avatar.xl {
+  width: 72px;
+  height: 72px;
+  font-size: 26px;
+  font-weight: 600;
+}

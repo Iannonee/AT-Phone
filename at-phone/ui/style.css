@@ -1,13 +1,13 @@
 /* ============================================================
    at-phone — style.css
-   Variabili CSS globali e stili base condivisi da tutte le app.
+   Variabili CSS globali. Tutti i file app usano queste variabili.
    ============================================================ */
 
 :root {
-    /* Colori principali */
+    /* Palette base */
     --bg:            #0c0c0c;
-    --surface:       rgba(255,255,255,0.055);
-    --surface-hover: rgba(255,255,255,0.08);
+    --surface:       rgba(255,255,255,0.04);
+    --surface-hover: rgba(255,255,255,0.07);
     --border:        rgba(255,255,255,0.07);
     --text:          rgba(255,255,255,0.88);
     --text-muted:    rgba(255,255,255,0.35);
@@ -19,28 +19,49 @@
     --blue:   #0a84ff;
     --red:    #ff453a;
     --purple: #bf5af2;
+    --yellow: #ffd60a;
 
-    /* Sfondi accenti semitrasparenti */
-    --green-bg:  rgba(52,199,89,0.12);
-    --blue-bg:   rgba(10,132,255,0.12);
-    --red-bg:    rgba(255,69,58,0.12);
-    --amber-bg:  rgba(255,159,10,0.12);
+    /* Sfondi accenti */
+    --green-bg: rgba(52,199,89,0.12);
+    --blue-bg:  rgba(10,132,255,0.12);
+    --red-bg:   rgba(255,69,58,0.12);
 
-    /* Messaggi */
-    --bubble-out: #1a3320;
-    --bubble-in:  #1c1c1c;
+    /* Bubble messaggi */
+    --bubble-out:        #1a3320;
+    --bubble-out-border: rgba(52,199,89,0.12);
+    --bubble-in:         #1c1c1c;
+    --bubble-in-border:  #282828;
+
+    /* Icone app — sfondo SEMPRE dark */
+    --icon-bg:     #1a1a1a;
+    --icon-border: #2a2a2a;
+
+    /* Stroke per icona per app */
+    --c-messages: #ffffff;
+    --c-calls:    #34c759;
+    --c-bank:     #ff9f0a;
+    --c-contacts: #aeaeb2;
+    --c-maps:     #30d158;
+    --c-photos:   #aeaeb2;
+    --c-notes:    #ffd60a;
+    --c-radio:    #bf5af2;
+    --c-garage:   #ff453a;
+    --c-mdt:      #0a84ff;
+    --c-darkweb:  #34c759;
+    --c-settings: #aeaeb2;
 
     /* Tipografia */
-    --font:    -apple-system, 'SF Pro Display', 'Helvetica Neue', Arial, sans-serif;
-    --radius:  14px;
-    --radius-sm: 8px;
-    --radius-xs: 6px;
+    --font: -apple-system, 'Helvetica Neue', sans-serif;
 
     /* Transizioni */
-    --transition: 0.18s cubic-bezier(0.4, 0, 0.2, 1);
-    --spring:     0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+    --transition: 0.15s ease;
+    --slide:      0.25s cubic-bezier(0.4,0,0.2,1);
+    --spring:     0.3s cubic-bezier(0.34,1.56,0.64,1);
 }
 
+/* ============================================================
+   Reset base
+   ============================================================ */
 *, *::before, *::after {
     box-sizing: border-box;
     margin: 0;
@@ -60,128 +81,96 @@ html, body {
     line-height: 1.4;
 }
 
-/* ============================================================
-   Scrollbar stile iOS
-   ============================================================ */
-::-webkit-scrollbar              { width: 3px; height: 3px; }
-::-webkit-scrollbar-track        { background: transparent; }
-::-webkit-scrollbar-thumb        { background: rgba(255,255,255,0.15); border-radius: 99px; }
-::-webkit-scrollbar-thumb:hover  { background: rgba(255,255,255,0.25); }
+/* Nascondi scrollbar ovunque */
+* {
+    scrollbar-width: none;
+    -ms-overflow-style: none;
+}
+*::-webkit-scrollbar { display: none; }
 
 /* ============================================================
-   Utility classes
+   Classi stroke per icone app (usate in index.html)
    ============================================================ */
-.hidden   { display: none !important; }
-.flex     { display: flex; }
-.flex-col { display: flex; flex-direction: column; }
-.items-center { align-items: center; }
-.justify-between { justify-content: space-between; }
-.gap-1 { gap: 4px; }
-.gap-2 { gap: 8px; }
-.gap-3 { gap: 12px; }
-.gap-4 { gap: 16px; }
+.icon-messages svg { stroke: var(--c-messages); }
+.icon-calls    svg { stroke: var(--c-calls); }
+.icon-bank     svg { stroke: var(--c-bank); }
+.icon-contacts svg { stroke: var(--c-contacts); }
+.icon-maps     svg { stroke: var(--c-maps); }
+.icon-photos   svg { stroke: var(--c-photos); }
+.icon-notes    svg { stroke: var(--c-notes); }
+.icon-radio    svg { stroke: var(--c-radio); }
+.icon-garage   svg { stroke: var(--c-garage); }
+.icon-mdt      svg { stroke: var(--c-mdt); }
+.icon-darkweb  svg { stroke: var(--c-darkweb); }
+.icon-settings svg { stroke: var(--c-settings); }
 
 /* ============================================================
-   Barra di navigazione app (usata da tutte le app iframe)
+   Navbar app — usata da tutte le schermate iframe
    ============================================================ */
 .app-navbar {
     display: flex;
     align-items: center;
     justify-content: space-between;
-    padding: 12px 16px 8px;
-    background: rgba(12,12,12,0.92);
-    backdrop-filter: blur(20px);
-    -webkit-backdrop-filter: blur(20px);
-    border-bottom: 1px solid var(--border);
-    position: sticky;
-    top: 0;
-    z-index: 10;
-    min-height: 52px;
+    padding: 12px 14px 8px;
+    background: rgba(12,12,12,0.96);
+    border-bottom: 0.5px solid var(--border);
+    flex-shrink: 0;
+    min-height: 48px;
 }
 
 .app-navbar-title {
-    font-size: 17px;
+    font-size: 15px;
     font-weight: 600;
     color: var(--text);
-    letter-spacing: -0.3px;
+    letter-spacing: -0.2px;
+    flex: 1;
+    text-align: center;
 }
 
 .nav-btn {
     background: none;
     border: none;
     color: var(--blue);
-    font-size: 15px;
+    font-size: 14px;
     font-family: var(--font);
     cursor: pointer;
     padding: 4px 2px;
     display: flex;
     align-items: center;
-    gap: 4px;
+    gap: 3px;
+    min-width: 56px;
     transition: opacity var(--transition);
-    min-width: 60px;
 }
 
-.nav-btn:active { opacity: 0.6; }
-.nav-btn.right   { justify-content: flex-end; }
-
-/* ============================================================
-   Ricerca
-   ============================================================ */
-.search-bar {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    background: var(--surface);
-    border-radius: 10px;
-    padding: 8px 12px;
-    margin: 8px 16px;
-    border: 1px solid var(--border);
-}
-
-.search-bar input {
-    flex: 1;
-    background: none;
-    border: none;
-    outline: none;
-    color: var(--text);
-    font-size: 15px;
-    font-family: var(--font);
-}
-
-.search-bar input::placeholder { color: var(--text-muted); }
-
-.search-bar svg { flex-shrink: 0; }
+.nav-btn:active { opacity: 0.5; }
+.nav-btn.right  { justify-content: flex-end; }
 
 /* ============================================================
    Avatar
    ============================================================ */
 .avatar {
-    width: 44px;
-    height: 44px;
     border-radius: 50%;
+    background: #1e1e1e;
     display: flex;
     align-items: center;
     justify-content: center;
-    font-size: 16px;
     font-weight: 600;
-    color: #fff;
+    color: var(--text);
     flex-shrink: 0;
     position: relative;
-    background: linear-gradient(135deg, #2d6a4f, #1b4332);
+    font-family: var(--font);
 }
 
-.avatar.lg {
-    width: 72px;
-    height: 72px;
-    font-size: 26px;
-}
+.avatar       { width: 40px; height: 40px; font-size: 14px; }
+.avatar.lg    { width: 64px; height: 64px; font-size: 22px; }
+.avatar.xl    { width: 72px; height: 72px; font-size: 26px; }
 
 .avatar-dot {
     position: absolute;
     bottom: 1px;
     right: 1px;
-    width: 11px;
-    height: 11px;
+    width: 10px;
+    height: 10px;
     border-radius: 50%;
     background: var(--green);
     border: 2px solid var(--bg);
@@ -190,189 +179,168 @@ html, body {
 
 .avatar-dot.online { display: block; }
 
-/* ============================================================
-   List item generica
-   ============================================================ */
-.list-item {
-    display: flex;
-    align-items: center;
-    gap: 12px;
-    padding: 12px 16px;
-    border-bottom: 1px solid var(--border);
-    cursor: pointer;
-    transition: background var(--transition);
-    -webkit-user-select: none;
-    user-select: none;
+.avatar-dot.lg {
+    width: 12px;
+    height: 12px;
+    border: 2px solid var(--bg);
 }
 
-.list-item:active { background: var(--surface-hover); }
-.list-item:last-child { border-bottom: none; }
-
 /* ============================================================
-   Bottoni
+   Search bar
    ============================================================ */
-.btn {
+.search-bar {
     display: flex;
     align-items: center;
-    justify-content: center;
     gap: 6px;
+    background: rgba(255,255,255,0.06);
+    border: 0.5px solid rgba(255,255,255,0.07);
+    border-radius: 10px;
+    padding: 7px 10px;
+    margin: 6px 14px;
+    flex-shrink: 0;
+}
+
+.search-bar input {
+    flex: 1;
+    background: none;
     border: none;
-    border-radius: var(--radius-sm);
-    font-family: var(--font);
-    font-size: 15px;
-    font-weight: 500;
-    cursor: pointer;
-    padding: 10px 18px;
-    transition: opacity var(--transition), transform var(--transition);
-}
-
-.btn:active { opacity: 0.7; transform: scale(0.97); }
-
-.btn-green  { background: var(--green);  color: #fff; }
-.btn-red    { background: var(--red);    color: #fff; }
-.btn-blue   { background: var(--blue);   color: #fff; }
-.btn-ghost  { background: var(--surface); color: var(--text); border: 1px solid var(--border); }
-.btn-danger { background: var(--red-bg); color: var(--red); }
-
-.btn-full { width: 100%; border-radius: var(--radius); padding: 14px; font-size: 16px; font-weight: 600; }
-
-/* ============================================================
-   Input form
-   ============================================================ */
-.form-field {
-    margin-bottom: 12px;
-}
-
-.form-label {
-    font-size: 12px;
-    font-weight: 500;
-    color: var(--text-muted);
-    text-transform: uppercase;
-    letter-spacing: 0.5px;
-    margin-bottom: 6px;
-    display: block;
-}
-
-.form-input {
-    width: 100%;
-    background: var(--surface);
-    border: 1px solid var(--border);
-    border-radius: var(--radius-sm);
-    color: var(--text);
-    font-family: var(--font);
-    font-size: 15px;
-    padding: 10px 14px;
     outline: none;
-    transition: border-color var(--transition);
+    color: var(--text);
+    font-size: 13px;
+    font-family: var(--font);
 }
 
-.form-input:focus { border-color: var(--blue); }
-.form-input::placeholder { color: var(--text-muted); }
-
-textarea.form-input {
-    resize: none;
-    min-height: 72px;
-}
+.search-bar input::placeholder { color: var(--text-muted); }
+.search-bar svg { flex-shrink: 0; }
 
 /* ============================================================
-   Sezione con titolo
+   Section label
    ============================================================ */
-.section-header {
-    padding: 16px 16px 6px;
-    font-size: 12px;
+.section-label {
+    padding: 6px 16px;
+    font-size: 10px;
     font-weight: 600;
-    color: var(--text-muted);
+    color: var(--text-subtle);
     text-transform: uppercase;
     letter-spacing: 0.5px;
-}
-
-/* ============================================================
-   Badge notifica
-   ============================================================ */
-.badge {
-    background: var(--red);
-    color: #fff;
-    border-radius: 99px;
-    font-size: 11px;
-    font-weight: 700;
-    min-width: 18px;
-    height: 18px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    padding: 0 5px;
     flex-shrink: 0;
 }
 
 /* ============================================================
-   Divisore
+   Info card + righe (scheda contatto, impostazioni ecc.)
    ============================================================ */
-.divider {
-    height: 1px;
-    background: var(--border);
-    margin: 0 16px;
+.info-card {
+    background: rgba(255,255,255,0.04);
+    border: 0.5px solid var(--border);
+    border-radius: 14px;
+    overflow: hidden;
+    margin: 0 13px 10px;
+}
+
+.info-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0 14px;
+    height: 42px;
+    border-bottom: 0.5px solid var(--border);
+    font-size: 13px;
+}
+
+.info-row:last-child { border-bottom: none; }
+.info-row-label { color: var(--text-muted); }
+.info-row-value { color: var(--text); text-align: right; }
+
+/* ============================================================
+   Badge
+   ============================================================ */
+.badge {
+    background: var(--green);
+    color: #000;
+    border-radius: 99px;
+    font-size: 10px;
+    font-weight: 700;
+    min-width: 16px;
+    height: 16px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0 4px;
+    flex-shrink: 0;
 }
 
 /* ============================================================
-   Toast / errore
+   Bottoni
+   ============================================================ */
+.btn-primary {
+    width: 100%;
+    background: var(--green);
+    color: #000;
+    font-weight: 600;
+    border: none;
+    border-radius: 12px;
+    padding: 12px;
+    font-size: 15px;
+    font-family: var(--font);
+    cursor: pointer;
+    transition: opacity var(--transition);
+    text-align: center;
+}
+
+.btn-primary:active { opacity: 0.8; }
+
+.btn-secondary {
+    width: 100%;
+    background: rgba(255,255,255,0.04);
+    border: 0.5px solid var(--border);
+    border-radius: 12px;
+    padding: 12px;
+    font-size: 15px;
+    font-family: var(--font);
+    color: var(--text-muted);
+    cursor: pointer;
+    transition: opacity var(--transition);
+    text-align: center;
+}
+
+.btn-secondary:active { opacity: 0.7; }
+
+/* ============================================================
+   Toast
    ============================================================ */
 .toast {
     position: fixed;
-    bottom: 80px;
+    bottom: 60px;
     left: 50%;
-    transform: translateX(-50%) translateY(20px);
-    background: rgba(30,30,30,0.95);
+    transform: translateX(-50%) translateY(10px);
+    background: rgba(28,28,28,0.96);
     color: var(--text);
-    padding: 10px 18px;
+    padding: 8px 16px;
     border-radius: 20px;
-    font-size: 14px;
+    font-size: 13px;
     opacity: 0;
     transition: opacity 0.2s, transform 0.2s;
     pointer-events: none;
-    border: 1px solid var(--border);
-    z-index: 999;
+    border: 0.5px solid var(--border);
+    z-index: 9999;
     white-space: nowrap;
 }
 
-.toast.show {
-    opacity: 1;
-    transform: translateX(-50%) translateY(0);
-}
+.toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
 
 /* ============================================================
-   Stato vuoto
+   Empty state
    ============================================================ */
 .empty-state {
     display: flex;
     flex-direction: column;
     align-items: center;
     justify-content: center;
-    gap: 12px;
+    gap: 10px;
     padding: 48px 24px;
-    color: var(--text-muted);
+    color: var(--text-subtle);
     text-align: center;
+    flex: 1;
 }
 
-.empty-state svg { opacity: 0.4; }
-.empty-state p   { font-size: 15px; }
-
-/* ============================================================
-   Animazione entrata schermata slide
-   ============================================================ */
-@keyframes slideInRight {
-    from { transform: translateX(100%); opacity: 0; }
-    to   { transform: translateX(0);    opacity: 1; }
-}
-
-@keyframes slideOutLeft {
-    from { transform: translateX(0);     opacity: 1; }
-    to   { transform: translateX(-30%);  opacity: 0; }
-}
-
-@keyframes fadeIn {
-    from { opacity: 0; }
-    to   { opacity: 1; }
-}
-
-.slide-in  { animation: slideInRight 0.28s cubic-bezier(0.4, 0, 0.2, 1) forwards; }
-.fade-in   { animation: fadeIn 0.2s ease forwards; }
+.empty-state p { font-size: 13px; }
